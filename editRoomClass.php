@@ -38,6 +38,27 @@ $row = $result->fetch_assoc();
 $roomClassId = $row['room_class_id'];
 $query->close();
 
+// DELETE Room Class
+if (isset($_POST['delete']) && $_POST['delete'] == "1") {
+    // Delete images
+    $stmt = $con->prepare("DELETE FROM images WHERE room_class_id = ?");
+    $stmt->bind_param("i", $roomClassId);
+    $stmt->execute();
+    $stmt->close();
+
+    // Delete room class
+    $stmt = $con->prepare("DELETE FROM room_classes WHERE room_class_id = ?");
+    $stmt->bind_param("i", $roomClassId);
+
+    if ($stmt->execute()) {
+        echo json_encode(['success' => true, 'message' => 'Room class deleted successfully']);
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Failed to delete room class']);
+    }
+    $stmt->close();
+    exit();
+}
+
 // UPDATE Room Class
 $updateFields = [];
 $params = [];
@@ -58,15 +79,23 @@ $fields = [
 foreach ($fields as $field => $type) {
     if (isset($_POST[$field])) {
         $value = $_POST[$field];
-        
+
+        // 🔹 Explicitly handle "drinks" and "smoking" fields
         if ($field === 'drinks' || $field === 'smoking') {
-            $value = ($value === "Yes") ? 1 : 0;
+            $value = ($value === "Yes") ? 1 : 0; // Convert "Yes"/"No" to 1/0
         }
-        
+
         $updateFields[] = "$field = ?";
         $params[] = $value;
         $paramTypes .= $type;
     }
+}
+
+
+
+ // Convert "drinks" and "smoking" to integers
+ if ($field === 'drinks' || $field === 'smoking') {
+    $value = intval($value); // Convert "1" or "0" to actual integers
 }
 
 if (!empty($updateFields)) {
@@ -85,10 +114,10 @@ if (!empty($updateFields)) {
     $stmt->close();
 }
 
-// Handle image upload
+// Handle image upload if any
 $uploadDir = "uploads/";
 if (!is_dir($uploadDir)) {
-    mkdir($uploadDir, 0777, true);
+    mkdir($uploadDir, 0777, true); // Create directory if it doesn't exist
 }
 
 if (!empty($_FILES['images']['name'][0])) {
@@ -104,6 +133,7 @@ if (!empty($_FILES['images']['name'][0])) {
         }
     }
     
+
     foreach ($_FILES['images']['tmp_name'] as $key => $tmpName) {
         if (!file_exists($tmpName)) {
             echo json_encode(['success' => false, 'message' => "Temp file does not exist: $tmpName"]);
@@ -115,9 +145,10 @@ if (!empty($_FILES['images']['name'][0])) {
 
         $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
         if (!in_array($_FILES['images']['type'][$key], $allowedTypes)) {
-            echo json_encode(['success' => false, 'message' => 'Invalid file type']);
-            exit();
-        }
+        echo json_encode(['success' => false, 'message' => 'Invalid file type']);
+        exit();
+}
+
 
         if (move_uploaded_file($tmpName, $filePath)) {
             $stmt = $con->prepare("INSERT INTO images (room_class_id, room_image_url) VALUES (?, ?)");
@@ -135,6 +166,7 @@ if (!empty($_FILES['images']['name'][0])) {
 // Handle removed images
 if (isset($_POST['removed_images']) && is_array($_POST['removed_images'])) {
     foreach ($_POST['removed_images'] as $imageId) {
+        // Get the file path from DB
         $stmt = $con->prepare("SELECT room_image_url FROM images WHERE image_id = ? AND room_class_id = ?");
         $stmt->bind_param("ii", $imageId, $roomClassId);
         $stmt->execute();
@@ -144,15 +176,18 @@ if (isset($_POST['removed_images']) && is_array($_POST['removed_images'])) {
             $imgRow = $result->fetch_assoc();
             $imgPath = $imgRow['room_image_url'];
 
+            // Delete file from server
             if (file_exists($imgPath)) {
                 unlink($imgPath);
             }
 
+            // Delete record from DB
             $deleteStmt = $con->prepare("DELETE FROM images WHERE image_id = ?");
             $deleteStmt->bind_param("i", $imageId);
             $deleteStmt->execute();
             $deleteStmt->close();
         }
+
         $stmt->close();
     }
 }
