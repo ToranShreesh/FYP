@@ -2,25 +2,30 @@
 include './helpers/connection.php'; // Database connection
 include './helpers/authHelper.php'; // Authentication helper
 
+// Set JSON content type
+header('Content-Type: application/json');
 
-// Fetch all rooms with their associated room class details
-$sql = "SELECT r.room_id, r.room_class_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled 
-        FROM rooms r
-        JOIN room_classes rc ON r.room_class_id = rc.room_class_id";
+try {     
+    // Fetch all rooms with their associated room class details
+    $sql = "SELECT r.room_id, r.room_class_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled 
+            FROM rooms r
+            JOIN room_classes rc ON r.room_class_id = rc.room_class_id";
+    $stmt = mysqli_prepare($con, $sql);
+    if (!$stmt) {
+        throw new Exception('Failed to prepare statement');
+    }
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
 
-
-$result = mysqli_query($con, $sql);
-
-if ($result) {
     $rooms = [];
     while ($row = mysqli_fetch_assoc($result)) {
         $rooms[] = [
-            'room_id' => $row['room_id'],
-            'room_class_id' => $row['room_class_id'],
+            'room_id' => (int)$row['room_id'],
+            'room_class_id' => (int)$row['room_class_id'],
             'class_name' => $row['class_name'],
-            'floor_number' => $row['floor_number'],
+            'floor_number' => (int)$row['floor_number'],
             'room_number' => $row['room_number'],
-            'is_enabled' => $row['is_enabled'] 
+            'is_enabled' => (int)$row['is_enabled'] // Cast to integer
         ];
     }
 
@@ -28,10 +33,14 @@ if ($result) {
         'success' => true,
         'rooms' => $rooms,
     ]);
-} else {
+
+    mysqli_stmt_close($stmt);
+} catch (Exception $e) {
     echo json_encode([
         'success' => false,
-        'message' => 'Failed to fetch rooms',
+        'message' => 'Error fetching rooms: ' . $e->getMessage(),
     ]);
 }
+
+mysqli_close($con);
 ?>

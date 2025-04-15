@@ -29,7 +29,7 @@ if (
         $_POST['base_price'],
         $_POST['description'],
         $_POST['amenities'],
-        $_POST['occupancy'],
+        $_POST['no_of_guests'],
         $_POST['room_size'],
         $_POST['drinks'],
         $_POST['smoking'],
@@ -38,19 +38,27 @@ if (
 ) {
     // Retrieve POST data
     $className = $_POST['class_name'];
-    $basePrice = $_POST['base_price'];
+    $basePrice = (int)$_POST['base_price']; // Cast to integer
     $description = mysqli_real_escape_string($con, $_POST['description']);
     $amenities = $_POST['amenities']; // Keep as JSON string
-    $occupancy = $_POST['occupancy'];
+    $noOfGuest = (int)$_POST['no_of_guests']; // Cast to integer
     $roomSize = $_POST['room_size'];
-    $drinks = (int)$_POST['drinks']; // Ensure it's an integer
-    $smoking = (int)$_POST['smoking']; // Ensure it's an integer
+    $drinks = (int)$_POST['drinks']; // Already cast to integer
+    $smoking = (int)$_POST['smoking']; // Already cast to integer
     $bedType = $_POST['bed_type'];
 
-    // Insert room class details into the database
-    $stmt = $con->prepare("INSERT INTO room_classes (class_name, base_price, description, amenities, occupancy, room_size, drinks, smoking, bed_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    $stmt->bind_param("ssssssiss", $className, $basePrice, $description, $amenities, $occupancy, $roomSize, $drinks, $smoking, $bedType);
+    // Validate no_of_guests
+    if ($noOfGuest < 1) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Number of guests must be a positive integer',
+        ]);
+        exit();
+    }
 
+    // Insert room class details into the database
+    $stmt = $con->prepare("INSERT INTO room_classes (class_name, base_price, description, amenities, no_of_guests, room_size, drinks, smoking, bed_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("sissisiss", $className, $basePrice, $description, $amenities, $noOfGuest, $roomSize, $drinks, $smoking, $bedType);
 
     if (!$stmt->execute()) {
         echo json_encode([
