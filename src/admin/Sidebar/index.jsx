@@ -12,6 +12,7 @@ const Sidebar = ({ active, setActive }) => {
         { title: "RoomClass", icon: <FaBoxes />, link: "/admin/editRoomClass" },
         { title: "Rooms", icon: <FaBoxes />, link: "/admin/editRoom" },
         { title: "Reports", icon: <MdPayments />, link: "/admin/adminReport" },
+        { title: "Payments", icon: <MdPayments />, link: "/admin/paymentList" },
     ];
 
     return (

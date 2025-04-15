@@ -167,67 +167,102 @@ const EditRoom = () => {
   
 
   return (
-    <div className="flex w-[1100px] justify-center min-h-screen">
-  <div className="p-6 w-full max-w-4xl mx-auto">
-    <h2 className="text-2xl font-bold mb-4 text-center">Admin - Manage Rooms</h2>
+    <div className="flex w-[1130px] min-h-screen bg-gray-50 justify-center">
+  <div className="p-8 w-full max-w-5xl mx-auto">
+    {/* Header */}
+    <h2 className="text-3xl font-semibold mb-6 text-gray-800 text-center tracking-tight">
+      Admin - Manage Rooms
+    </h2>
+
+    {/* Loading State */}
     {loading ? (
-      <p className="text-center">Loading rooms...</p>
+      <p className="text-center text-gray-500 text-lg">Loading rooms...</p>
     ) : (
-      <table className="w-full border-collapse border border-gray-300">
-        <thead>
-          <tr className="bg-gray-100">
-            <th className="border p-2">Class Name</th>
-            <th className="border p-2">Floor Number</th>
-            <th className="border p-2">Room Number</th>
-            <th className="border p-2">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {rooms.map((room) => (
-            <tr key={room.room_id}>
-              <td className="border p-2">{room.class_name}</td>
-              <td className="border p-2">{room.floor_number}</td>
-              <td className="border p-2">{room.room_number}</td>
-              <td className="border p-2 flex gap-3 justify-center">
-                <button
-                  onClick={() => handleEditClick(room)}
-                  className="bg-blue-500 text-white px-3 py-1 rounded"
-                >
-                  {selectedRoom?.room_id === room.room_id ? "Close" : "Edit"}
-                </button>
-                <button
-                  onClick={() => handleDelete(room.room_id)}
-                  className="bg-red-500 text-white px-3 py-1 rounded"
-                >
-                  Delete
-                </button>
-                <button
-                  onClick={() => handleToggleStatus(room)}
-                  className={`px-3 py-1 rounded text-white ${room.is_enabled ? "bg-red-500" : "bg-green-500"}`}
-                >
-                  {room.is_enabled ? "Disable" : "Enable"}
-                </button>
-              </td>
+      /* Table */
+      <div className="shadow-lg rounded-lg overflow-hidden">
+        <table className="w-full border-collapse">
+          <thead>
+            <tr className="bg-indigo-600 text-white">
+              <th className="p-4 text-left font-medium">Class Name</th>
+              <th className="p-4 text-left font-medium">Floor Number</th>
+              <th className="p-4 text-left font-medium">Room Number</th>
+              <th className="p-4 text-center font-medium">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {rooms.map((room) => (
+              <tr key={room.room_id} className="border-b hover:bg-gray-100 transition-colors">
+                <td className="p-4 text-gray-700">{room.class_name}</td>
+                <td className="p-4 text-gray-700">{room.floor_number}</td>
+                <td className="p-4 text-gray-700">{room.room_number}</td>
+                <td className="p-4 flex gap-3 justify-center">
+                  <button
+                    onClick={() => handleEditClick(room)}
+                    className="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1.5 rounded-lg shadow-sm transition-all"
+                  >
+                    {selectedRoom?.room_id === room.room_id ? "Close" : "Edit"}
+                  </button>
+                  <button
+                    onClick={() => handleDelete(room.room_id)}
+                    className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg shadow-sm transition-all"
+                  >
+                    Delete
+                  </button>
+                  <button
+                    onClick={() => handleToggleStatus(room)}
+                    className={`px-4 py-1.5 rounded-lg text-white shadow-sm transition-all ${
+                      room.is_enabled
+                        ? "bg-red-500 hover:bg-red-600"
+                        : "bg-green-500 hover:bg-green-600"
+                    }`}
+                  >
+                    {room.is_enabled ? "Disable" : "Enable"}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     )}
+
+    {/* Edit Form */}
     {selectedRoom && (
-      <form onSubmit={handleUpdate} className="mt-4 space-y-4 p-4 border rounded bg-gray-100">
-        <h3 className="text-xl font-bold text-center">Edit Room: {selectedRoom.room_number}</h3>
-        {["class_name", "floor_number", "room_number"].map((key) => (
-          <div key={key} className="flex flex-col">
-            <label className="font-semibold">{key.replace("_", " ").toUpperCase()}</label>
-            <input
-              type="text"
-              value={selectedRoom[key] || ""}
-              onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
-              className="w-full p-2 border rounded"
-            />
-          </div>
-        ))}
-        <button type="submit" disabled={updating} className="w-full px-4 py-2 rounded text-white bg-green-500">
+      <form
+        onSubmit={handleUpdate}
+        className="mt-8 p-6 bg-white shadow-lg rounded-lg space-y-6"
+      >
+        <h3 className="text-2xl font-semibold text-gray-800 text-center">
+          Edit Room: {selectedRoom.room_number}
+        </h3>
+
+        {/* Form Fields */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          {["class_name", "floor_number", "room_number"].map((key) => (
+            <div key={key} className="flex flex-col">
+              <label className="text-sm font-medium text-gray-600 mb-1">
+                {key.replace("_", " ").toUpperCase()}
+              </label>
+              <input
+                type="text"
+                value={selectedRoom[key] || ""}
+                onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
+                className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+              />
+            </div>
+          ))}
+        </div>
+
+        {/* Submit Button */}
+        <button
+          type="submit"
+          disabled={updating}
+          className={`w-full px-4 py-3 rounded-lg text-white font-medium ${
+            updating
+              ? "bg-gray-400 cursor-not-allowed"
+              : "bg-green-500 hover:bg-green-600"
+          } transition-all`}
+        >
           {updating ? "Updating..." : "Update Room"}
         </button>
       </form>

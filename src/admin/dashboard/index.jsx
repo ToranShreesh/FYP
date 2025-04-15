@@ -4,13 +4,13 @@ import Sidebar from "../Sidebar";
 import AdminHome from "../home";
 import { IoIosMenu } from "react-icons/io";
 import AdminNavbar from "../../components/adminNavbar";
-
 import AddRoomClass from "../addRoomClass";
 import AddRoom from "../addRoom";
 import AddFacility from "../addFacility";
-import EditRoomClass from "../editRoomClass";
 import EditRoom from "../editRoom";
 import AdminReports from "../adminReport";
+import EditRoomClass from "../editRoomClass";
+import PaymentList from "../paymentList";
 
 
 const AdminDashboard = () => {
@@ -23,6 +23,7 @@ const AdminDashboard = () => {
         <EditRoomClass/>,
         <EditRoom/>,
         <AdminReports />,
+        <PaymentList/>
     ];
 
 

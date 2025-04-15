@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { FiDownload, FiRefreshCw } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { baseUrl } from '../../constants';
@@ -9,7 +9,7 @@ import html2canvas from 'html2canvas';
 const AdminReports = () => {
   const [reportConfig, setReportConfig] = useState({
     type: 'bookings',
-    range: 'daily'
+    range: 'daily',
   });
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -28,7 +28,7 @@ const AdminReports = () => {
 
       const response = await fetch(`${baseUrl}reporting.php`, {
         method: 'POST',
-        body: formData
+        body: formData,
       });
 
       const result = await response.json();
@@ -57,7 +57,7 @@ const AdminReports = () => {
 
   const formatMonth = (monthString) => {
     const [year, month] = monthString.split('-');
-    return new Date(year, month-1).toLocaleString('default', { month: 'short' });
+    return new Date(year, month - 1).toLocaleString('default', { month: 'short', year: 'numeric' });
   };
 
   const handleExportPDF = async () => {
@@ -67,7 +67,7 @@ const AdminReports = () => {
       const canvas = await html2canvas(input, {
         scale: 2,
         logging: false,
-        useCORS: true
+        useCORS: true,
       });
 
       const imgData = canvas.toDataURL('image/png');
@@ -77,7 +77,7 @@ const AdminReports = () => {
       const pdfHeight = (imgProps.height * pdfWidth) / imgProps.width;
 
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${reportConfig.type}_report_${new Date().toISOString().slice(0,10)}.pdf`);
+      pdf.save(`${reportConfig.type}_report_${new Date().toISOString().slice(0, 10)}.pdf`);
       toast.success('Report exported successfully!');
     } catch (err) {
       toast.error('Failed to export report');
@@ -94,58 +94,55 @@ const AdminReports = () => {
 
     const isDaily = reportConfig.range === 'daily';
     const dataKey = reportConfig.type === 'bookings' ? 'count' : 'amount';
-    const chartTitle = reportConfig.type === 'bookings' 
-      ? `${isDaily ? 'Daily' : 'Monthly'} Bookings` 
+    const chartTitle = reportConfig.type === 'bookings'
+      ? `${isDaily ? 'Daily' : 'Monthly'} Bookings`
       : `${isDaily ? 'Daily' : 'Monthly'} Earnings`;
+    const barColor = reportConfig.type === 'bookings' ? '#3B82F6' : '#10B981'; // Blue for bookings, Green for earnings
 
     return (
-      <div className="bg-white p-4 rounded-lg shadow-md">
-        <h3 className="text-xl font-semibold text-gray-700 mb-4">{chartTitle}</h3>
+      <div className="bg-white p-6 rounded-lg shadow-lg">
+        <h3 className="text-2xl font-semibold text-gray-800 mb-6">{chartTitle}</h3>
         <div className="h-[500px]">
           <ResponsiveContainer width="100%" height="100%">
-            {isDaily ? (
-              <LineChart data={reportData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="date"
-                  tickFormatter={formatDate}
-                />
-                <YAxis />
-                <Tooltip 
-                  labelFormatter={formatDate}
-                />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey={dataKey}
-                  stroke="#3B82F6"
-                  activeDot={{ r: 8 }}
-                />
-              </LineChart>
-            ) : (
-              <BarChart data={reportData}>
-                <CartesianGrid strokeDasharray="3 3" />
-                <XAxis 
-                  dataKey="month"
-                  tickFormatter={formatMonth}
-                />
-                <YAxis />
-                <Tooltip 
-                  labelFormatter={(value) => {
-                    const [year, month] = value.split('-');
-                    return new Date(year, month-1).toLocaleString('default', { 
-                      month: 'long', 
-                      year: 'numeric' 
-                    });
-                  }}
-                />
-                <Legend />
-                <Bar
-                  dataKey={dataKey}
-                  fill="#3B82F6"
-                />
-              </BarChart>
-            )}
+            <BarChart data={reportData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
+              <XAxis
+                dataKey={isDaily ? 'date' : 'month'}
+                tickFormatter={isDaily ? formatDate : formatMonth}
+                stroke="#6b7280"
+                fontSize={14}
+                interval={isDaily && reportData.length > 10 ? 'preserveStartEnd' : 0}
+              />
+              <YAxis
+                stroke="#6b7280"
+                fontSize={14}
+                tickFormatter={(value) =>
+                  reportConfig.type === 'earnings' ? `$${value.toLocaleString()}` : value
+                }
+              />
+              <Tooltip
+                formatter={(value) =>
+                  reportConfig.type === 'earnings' ? `$${value.toLocaleString()}` : value
+                }
+                labelFormatter={(label) =>
+                  isDaily
+                    ? formatDate(label)
+                    : new Date(label.split('-')[0], label.split('-')[1] - 1).toLocaleString('default', {
+                        month: 'long',
+                        year: 'numeric',
+                      })
+                }
+                contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}
+              />
+              <Legend wrapperStyle={{ fontSize: '14px', paddingTop: '20px' }} />
+              <Bar
+                dataKey={dataKey}
+                fill={barColor}
+                name={reportConfig.type === 'bookings' ? 'Bookings' : 'Earnings'}
+                barSize={isDaily && reportData.length > 20 ? 20 : 40}
+                radius={[4, 4, 0, 0]}
+              />
+            </BarChart>
           </ResponsiveContainer>
         </div>
       </div>
@@ -236,7 +233,7 @@ const AdminReports = () => {
           <select
             className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
             value={reportConfig.type}
-            onChange={(e) => setReportConfig({...reportConfig, type: e.target.value})}
+            onChange={(e) => setReportConfig({ ...reportConfig, type: e.target.value })}
             disabled={loading}
           >
             <option value="bookings">Bookings</option>
@@ -252,7 +249,7 @@ const AdminReports = () => {
             <select
               className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
               value={reportConfig.range}
-              onChange={(e) => setReportConfig({...reportConfig, range: e.target.value})}
+              onChange={(e) => setReportConfig({ ...reportConfig, range: e.target.value })}
               disabled={loading}
             >
               <option value="daily">Daily</option>
