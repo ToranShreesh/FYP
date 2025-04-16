@@ -11,6 +11,7 @@ import EditRoom from "../editRoom";
 import AdminReports from "../adminReport";
 import EditRoomClass from "../editRoomClass";
 import PaymentList from "../paymentList";
+import ManageFacilities from "../facility";
 
 
 const AdminDashboard = () => {
@@ -20,6 +21,7 @@ const AdminDashboard = () => {
         <AddRoom/>,
         <AddRoomClass/>,
         <AddFacility/>,
+        <ManageFacilities/>,
         <EditRoomClass/>,
         <EditRoom/>,
         <AdminReports />,

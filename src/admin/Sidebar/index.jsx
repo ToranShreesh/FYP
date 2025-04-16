@@ -9,6 +9,7 @@ const Sidebar = ({ active, setActive }) => {
         { title: "Add Rooms", icon: <FaTable />, link: "/admin/addroom" },
         { title: "AddRoomClass", icon: <FaBoxes />, link: "/admin/addRoomClass" },
         { title: "Add Facility", icon: <FaBoxes />, link: "/admin/addFacility" },
+        { title: "Facility", icon: <FaBoxes />, link: "/admin/facility" },
         { title: "RoomClass", icon: <FaBoxes />, link: "/admin/editRoomClass" },
         { title: "Rooms", icon: <FaBoxes />, link: "/admin/editRoom" },
         { title: "Reports", icon: <MdPayments />, link: "/admin/adminReport" },
