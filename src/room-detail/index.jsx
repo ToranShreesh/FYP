@@ -4,7 +4,8 @@ import { baseUrl } from "../constants";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import { FaChevronLeft, FaChevronRight } from "react-icons/fa";
-import { FaChevronDown, FaChevronUp } from "react-icons/fa"; // For expanding/collapsing
+import { FaChevronDown, FaChevronUp } from "react-icons/fa";
+import ReviewCard from "../components/ReviewCard";
 
 const RoomDetailPage = () => {
   const { room_class_id } = useParams();
@@ -132,8 +133,6 @@ const RoomDetailPage = () => {
           </ul>
         </div>
 
-     
-
         {/* Features Section */}
         <div className="mt-8 p-6 bg-white rounded-lg shadow-lg">
           <h3 className="text-2xl font-semibold text-gray-800 mb-3">Features</h3>
@@ -146,9 +145,8 @@ const RoomDetailPage = () => {
           </div>
         </div>
 
-        
-         {/* Hotel Rules (Collapsible) */}
-         <div className="mt-8 p-6 bg-white rounded-lg shadow-lg">
+        {/* Hotel Rules (Collapsible) */}
+        <div className="mt-8 p-6 bg-white rounded-lg shadow-lg">
           <h3 className="text-2xl font-semibold text-gray-800">Hotel Rules</h3>
           <ul className="mt-4 space-y-2 text-lg text-gray-700">
             {hotelRules.slice(0, showAllRules ? hotelRules.length : 3).map((rule, index) => (
@@ -166,6 +164,9 @@ const RoomDetailPage = () => {
             {showAllRules ? <FaChevronUp className="ml-2" /> : <FaChevronDown className="ml-2" />}
           </button>
         </div>
+
+        {/* Add Review Section */}
+        <ReviewCard room_class_id={room_class_id} />
       </div>
 
       {/* Modal for Full Screen Image */}
@@ -182,7 +183,7 @@ const RoomDetailPage = () => {
               className="absolute top-4 right-4 bg-white text-gray-800 p-2 rounded-full"
               onClick={() => setIsModalOpen(false)}
             >
-              &times;
+              ×
             </button>
           </div>
         </div>
