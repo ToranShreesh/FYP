@@ -64,17 +64,29 @@ try {
         throw new Exception('Error fetching rooms for cancellation');
     }
 
-    // Remove rooms
+    // Prepare statements for room deletion and enabling
     $deleteRoom = $con->prepare("
         DELETE FROM booking_rooms 
         WHERE booking_id = ? AND room_id = ? 
         LIMIT 1
     ");
+    $enableRoom = $con->prepare("
+        UPDATE room 
+        SET is_enabled = 1 
+        WHERE room_id = ?
+    ");
 
     while ($room = $roomResult->fetch_assoc()) {
+        // Delete room from booking
         $deleteRoom->bind_param("ii", $bookingId, $room['room_id']);
         if (!$deleteRoom->execute()) {
             throw new Exception('Failed to cancel room');
+        }
+
+        // Enable the room
+        $enableRoom->bind_param("i", $room['room_id']);
+        if (!$enableRoom->execute()) {
+            throw new Exception('Failed to enable room');
         }
     }
 
@@ -105,6 +117,7 @@ try {
     if (isset($stmt)) $stmt->close();
     if (isset($roomFetch)) $roomFetch->close();
     if (isset($deleteRoom)) $deleteRoom->close();
+    if (isset($enableRoom)) $enableRoom->close();
     if (isset($updateBooking)) $updateBooking->close();
 }
 ?>

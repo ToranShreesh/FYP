@@ -56,7 +56,7 @@ try {
     $roomResult = $roomQuery->get_result();
     $availableRooms = $roomResult->fetch_assoc()['available_rooms'];
 
-    if (isset($_POST['added_rooms'])) {  // Fix: Use 'added_rooms' instead of 'updated_rooms'
+    if (isset($_POST['added_rooms'])) {
         $roomsToAdd = intval($_POST['added_rooms']);
 
         if ($roomsToAdd < 1) {
@@ -82,12 +82,21 @@ try {
             throw new Exception('Not enough rooms available.');
         }
 
-        // Assign new rooms
+        // Prepare statements for room assignment and disabling
         $insertRoom = $con->prepare("INSERT INTO booking_rooms (booking_id, room_id) VALUES (?, ?)");
+        $disableRoom = $con->prepare("UPDATE rooms SET is_enabled = 0 WHERE room_id = ?");
+
         while ($room = $roomResult->fetch_assoc()) {
+            // Assign room to booking
             $insertRoom->bind_param("ii", $bookingId, $room['room_id']);
             if (!$insertRoom->execute()) {
                 throw new Exception('Failed to assign room: ' . $con->error);
+            }
+
+            // Disable the room
+            $disableRoom->bind_param("i", $room['room_id']);
+            if (!$disableRoom->execute()) {
+                throw new Exception('Failed to disable room: ' . $con->error);
             }
         }
 
@@ -96,7 +105,7 @@ try {
         $updateBooking = $con->prepare("UPDATE bookings SET booking_amount = ? WHERE booking_id = ?");
         $updateBooking->bind_param("di", $newBookingAmount, $bookingId);
         if (!$updateBooking->execute()) {
-            throw new Exception('Failed to update booking amount: ' . $con->error);
+                throw new Exception('Failed to update booking amount: ' . $con->error);
         }
 
         $con->commit();
@@ -122,7 +131,9 @@ try {
 } finally {
     $stmt->close();
     if (isset($roomQuery)) $roomQuery->close();
+    if (isset($fetchRooms)) $fetchRooms->close();
     if (isset($insertRoom)) $insertRoom->close();
+    if (isset($disableRoom)) $disableRoom->close();
     if (isset($updateBooking)) $updateBooking->close();
 }
 ?>
