@@ -14,6 +14,7 @@ import ProfilePage from "./profile";
 import BookingCancel from "./booking-cancel"; 
 import BookingUpdate from "./booking-update";
 import PaymentSuccess from "./payment-success";
+import UpdateProfile from "./updateProfile";
 
 
 function App() {
@@ -55,6 +56,10 @@ function App() {
     {
       path: "/profile",
       element: <ProfilePage />,
+    },
+    {
+      path: "/update-profile",
+      element: <UpdateProfile/>,
     },
     {
       path: "/room/:room_class_id",
