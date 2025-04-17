@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import { FiDownload, FiRefreshCw } from 'react-icons/fi';
+import { FiDownload, FiRefreshCw, FiCalendar } from 'react-icons/fi';
 import { toast } from 'react-hot-toast';
 import { baseUrl } from '../../constants';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
 
 const AdminReports = () => {
   const [reportConfig, setReportConfig] = useState({
     type: 'bookings',
-    range: 'daily',
+    startDate: new Date(new Date().setDate(new Date().getDate() - 30)),
+    endDate: new Date(),
   });
   const [reportData, setReportData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -24,7 +27,10 @@ const AdminReports = () => {
       const formData = new FormData();
       formData.append('token', token);
       formData.append('report_type', reportConfig.type);
-      formData.append('time_range', reportConfig.range);
+      if (reportConfig.type === 'bookings' || reportConfig.type === 'earnings') {
+        formData.append('start_date', reportConfig.startDate.toISOString().split('T')[0]);
+        formData.append('end_date', reportConfig.endDate.toISOString().split('T')[0]);
+      }
 
       const response = await fetch(`${baseUrl}reporting.php`, {
         method: 'POST',
@@ -52,12 +58,7 @@ const AdminReports = () => {
 
   const formatDate = (dateString) => {
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-  };
-
-  const formatMonth = (monthString) => {
-    const [year, month] = monthString.split('-');
-    return new Date(year, month - 1).toLocaleString('default', { month: 'short', year: 'numeric' });
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   const handleExportPDF = async () => {
@@ -92,12 +93,11 @@ const AdminReports = () => {
       return <div className="text-center py-10 text-gray-500">No data available</div>;
     }
 
-    const isDaily = reportConfig.range === 'daily';
     const dataKey = reportConfig.type === 'bookings' ? 'count' : 'amount';
     const chartTitle = reportConfig.type === 'bookings'
-      ? `${isDaily ? 'Daily' : 'Monthly'} Bookings`
-      : `${isDaily ? 'Daily' : 'Monthly'} Earnings`;
-    const barColor = reportConfig.type === 'bookings' ? '#3B82F6' : '#10B981'; // Blue for bookings, Green for earnings
+      ? `Bookings from ${formatDate(reportConfig.startDate)} to ${formatDate(reportConfig.endDate)}`
+      : `Earnings from ${formatDate(reportConfig.startDate)} to ${formatDate(reportConfig.endDate)}`;
+    const barColor = reportConfig.type === 'bookings' ? '#3B82F6' : '#10B981';
 
     return (
       <div className="bg-white p-6 rounded-lg shadow-lg">
@@ -107,11 +107,11 @@ const AdminReports = () => {
             <BarChart data={reportData} margin={{ top: 20, right: 30, left: 20, bottom: 10 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
               <XAxis
-                dataKey={isDaily ? 'date' : 'month'}
-                tickFormatter={isDaily ? formatDate : formatMonth}
+                dataKey="date"
+                tickFormatter={formatDate}
                 stroke="#6b7280"
                 fontSize={14}
-                interval={isDaily && reportData.length > 10 ? 'preserveStartEnd' : 0}
+                interval={reportData.length > 10 ? 'preserveStartEnd' : 0}
               />
               <YAxis
                 stroke="#6b7280"
@@ -124,14 +124,7 @@ const AdminReports = () => {
                 formatter={(value) =>
                   reportConfig.type === 'earnings' ? `$${value.toLocaleString()}` : value
                 }
-                labelFormatter={(label) =>
-                  isDaily
-                    ? formatDate(label)
-                    : new Date(label.split('-')[0], label.split('-')[1] - 1).toLocaleString('default', {
-                        month: 'long',
-                        year: 'numeric',
-                      })
-                }
+                labelFormatter={(label) => formatDate(label)}
                 contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}
               />
               <Legend wrapperStyle={{ fontSize: '14px', paddingTop: '20px' }} />
@@ -139,7 +132,7 @@ const AdminReports = () => {
                 dataKey={dataKey}
                 fill={barColor}
                 name={reportConfig.type === 'bookings' ? 'Bookings' : 'Earnings'}
-                barSize={isDaily && reportData.length > 20 ? 20 : 40}
+                barSize={reportData.length > 20 ? 20 : 40}
                 radius={[4, 4, 0, 0]}
               />
             </BarChart>
@@ -214,89 +207,138 @@ const AdminReports = () => {
     );
   };
 
-  return (
-    <div className="w-[1130px] min-h-screen p-6 bg-gray-100 mx-auto">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-3xl font-bold text-gray-800">Hotel Reports</h2>
-        <button
-          className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors disabled:opacity-50"
-          onClick={handleExportPDF}
-          disabled={loading || !reportData || reportData.length === 0}
-        >
-          <FiDownload /> Export Report
-        </button>
+  const DateRangePicker = () => (
+    <div className="flex items-center gap-4">
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600 mb-1">START DATE</label>
+        <DatePicker
+          selected={reportConfig.startDate}
+          onChange={(date) => setReportConfig({ ...reportConfig, startDate: date })}
+          selectsStart
+          startDate={reportConfig.startDate}
+          endDate={reportConfig.endDate}
+          dateFormat="MM/dd/yyyy" // Matches the mm/dd/yyyy format in the image
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-32"
+          disabled={loading}
+          placeholderText="mm/dd/yyyy"
+        />
       </div>
+      <div className="flex flex-col">
+        <label className="text-sm font-medium text-gray-600 mb-1">END DATE</label>
+        <DatePicker
+          selected={reportConfig.endDate}
+          onChange={(date) => setReportConfig({ ...reportConfig, endDate: date })}
+          selectsEnd
+          startDate={reportConfig.startDate}
+          endDate={reportConfig.endDate}
+          dateFormat="MM/dd/yyyy" // Matches the mm/dd/yyyy format in the image
+          className="border border-gray-300 rounded-md px-3 py-2 text-gray-700 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 w-32"
+          disabled={loading}
+          placeholderText="mm/dd/yyyy"
+        />
+      </div>
+    </div>
+  );
 
-      <div className="flex flex-wrap items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm">
-        <div className="flex items-center gap-2">
-          <label className="text-lg font-medium text-gray-700">Report Type:</label>
-          <select
-            className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-            value={reportConfig.type}
-            onChange={(e) => setReportConfig({ ...reportConfig, type: e.target.value })}
-            disabled={loading}
+  return (
+    <>
+      {/* Custom CSS for DatePicker to highlight only hovered or selected dates */}
+      <style jsx>{`
+        /* Remove default range highlighting */
+        .react-datepicker__day--in-range {
+          background-color: transparent !important;
+          color: #000 !important;
+        }
+
+        /* Ensure only the hovered date is highlighted */
+        .react-datepicker__day:hover {
+          background-color: #3b82f6 !important;
+          color: white !important;
+        }
+
+        /* Ensure only the selected date is highlighted */
+        .react-datepicker__day--selected {
+          background-color: #3b82f6 !important;
+          color: white !important;
+        }
+
+        /* Optional: Remove any additional range styling if present */
+        .react-datepicker__day--in-selecting-range {
+          background-color: transparent !important;
+          color: #000 !important;
+        }
+      `}</style>
+
+      <div className="w-[1130px] min-h-screen p-6 bg-gray-100 mx-auto">
+        <div className="flex justify-between items-center mb-6">
+          <h2 className="text-3xl font-bold text-gray-800">Hotel Reports</h2>
+          <button
+            className="bg-green-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-green-700 transition-colors disabled:opacity-50"
+            onClick={handleExportPDF}
+            disabled={loading || !reportData || reportData.length === 0}
           >
-            <option value="bookings">Bookings</option>
-            <option value="earnings">Earnings</option>
-            <option value="guests">Guest Statistics</option>
-            <option value="most-booked-room">Most Booked Room</option>
-          </select>
+            <FiDownload /> Export Report
+          </button>
         </div>
 
-        {(reportConfig.type === 'bookings' || reportConfig.type === 'earnings') && (
+        <div className="flex flex-wrap items-center gap-4 mb-6 bg-white p-4 rounded-lg shadow-sm">
           <div className="flex items-center gap-2">
-            <label className="text-lg font-medium text-gray-700">Time Range:</label>
+            <label className="text-lg font-medium text-gray-700 whitespace-nowrap">Report Type:</label>
             <select
-              className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all"
-              value={reportConfig.range}
-              onChange={(e) => setReportConfig({ ...reportConfig, range: e.target.value })}
+              className="border border-gray-300 p-2 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white text-gray-700 font-medium shadow-sm transition-all"
+              value={reportConfig.type}
+              onChange={(e) => setReportConfig({ ...reportConfig, type: e.target.value })}
               disabled={loading}
             >
-              <option value="daily">Daily</option>
-              <option value="monthly">Monthly</option>
+              <option value="bookings">Bookings</option>
+              <option value="earnings">Earnings</option>
+              <option value="guests">Guest Statistics</option>
+              <option value="most-booked-room">Most Booked Room</option>
             </select>
+          </div>
+
+          {(reportConfig.type === 'bookings' || reportConfig.type === 'earnings') && <DateRangePicker />}
+
+          <button
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
+            onClick={fetchReport}
+            disabled={loading}
+          >
+            {loading ? (
+              <>
+                <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Loading...
+              </>
+            ) : (
+              <>
+                <FiRefreshCw /> Refresh
+              </>
+            )}
+          </button>
+        </div>
+
+        {loading && (
+          <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
+            <div className="bg-blue-600 h-1.5 rounded-full animate-pulse"></div>
           </div>
         )}
 
-        <button
-          className="bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-blue-700 transition-colors disabled:opacity-50"
-          onClick={fetchReport}
-          disabled={loading}
-        >
-          {loading ? (
-            <>
-              <svg className="animate-spin h-5 w-5 mr-2" viewBox="0 0 24 24">
-                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-              </svg>
-              Loading...
-            </>
-          ) : (
-            <>
-              <FiRefreshCw /> Refresh
-            </>
-          )}
-        </button>
-      </div>
+        {error && (
+          <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
+            <p className="font-medium">Error: {error}</p>
+          </div>
+        )}
 
-      {loading && (
-        <div className="w-full bg-gray-200 rounded-full h-1.5 mb-4">
-          <div className="bg-blue-600 h-1.5 rounded-full animate-pulse"></div>
+        <div id="report-content">
+          {reportConfig.type === 'bookings' || reportConfig.type === 'earnings' ? renderChart() : 
+           reportConfig.type === 'guests' ? renderGuestReport() : 
+           reportConfig.type === 'most-booked-room' ? renderRoomReport() : null}
         </div>
-      )}
-
-      {error && (
-        <div className="mb-4 p-3 bg-red-50 border-l-4 border-red-500 text-red-700 rounded">
-          <p className="font-medium">Error: {error}</p>
-        </div>
-      )}
-
-      <div id="report-content">
-        {reportConfig.type === 'bookings' || reportConfig.type === 'earnings' ? renderChart() : 
-         reportConfig.type === 'guests' ? renderGuestReport() : 
-         reportConfig.type === 'most-booked-room' ? renderRoomReport() : null}
       </div>
-    </div>
+    </>
   );
 };
 

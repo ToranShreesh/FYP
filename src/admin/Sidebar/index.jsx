@@ -12,6 +12,7 @@ const Sidebar = ({ active, setActive }) => {
         { title: "Facility", icon: <FaBoxes />, link: "/admin/facility" },
         { title: "RoomClass", icon: <FaBoxes />, link: "/admin/editRoomClass" },
         { title: "Rooms", icon: <FaBoxes />, link: "/admin/editRoom" },
+        { title: "Facility Ratings", icon: <FaBoxes />, link: "/admin/facilityRatings" },
         { title: "Reports", icon: <MdPayments />, link: "/admin/adminReport" },
         { title: "Payments", icon: <MdPayments />, link: "/admin/paymentList" },
     ];
