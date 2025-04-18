@@ -29,7 +29,7 @@ $result = $stmt->get_result();
 if ($result->num_rows > 0) {
     $booking = $result->fetch_assoc();
 
-    // Get total rooms of the booked class
+    // Get total enabled rooms of the booked class
     $roomClassQuery = "
         SELECT COUNT(*) AS total_rooms 
         FROM rooms 
@@ -37,7 +37,7 @@ if ($result->num_rows > 0) {
             SELECT room_class_id FROM rooms WHERE room_id IN (
                 SELECT room_id FROM booking_rooms WHERE booking_id = ?
             ) LIMIT 1
-        )
+        ) AND is_enabled = 1
     ";
 
     $stmt = $con->prepare($roomClassQuery);
@@ -46,7 +46,7 @@ if ($result->num_rows > 0) {
     $roomClassResult = $stmt->get_result();
     $totalRooms = $roomClassResult->fetch_assoc()['total_rooms'] ?? 0;
 
-    // Get booked rooms for the same class
+    // Get booked rooms for the same class (only enabled rooms)
     $bookedRoomsQuery = "
         SELECT COUNT(*) AS booked_rooms 
         FROM booking_rooms br
@@ -55,7 +55,7 @@ if ($result->num_rows > 0) {
             SELECT room_class_id FROM rooms WHERE room_id IN (
                 SELECT room_id FROM booking_rooms WHERE booking_id = ?
             ) LIMIT 1
-        )
+        ) AND ro.is_enabled = 1
     ";
 
     $stmt = $con->prepare($bookedRoomsQuery);

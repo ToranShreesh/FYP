@@ -27,6 +27,7 @@ $checkinDate = $_POST['checkin_date'];
 $checkoutDate = $_POST['checkout_date'];
 $bookingAmount = floatval($_POST['booking_amount']);
 $bookingDate = date('Y-m-d');
+$bookingStatus = 'Pending'; // Set initial booking status
 
 // Khalti configuration
 $KHALTI_SECRET_KEY = 'b8e052b48a8942a6afbf955e765d585a';
@@ -38,9 +39,9 @@ $WEBSITE_URL = 'http://localhost:3000';
 $con->begin_transaction();
 
 try {
-    // Insert booking record
-    $stmt = $con->prepare("INSERT INTO bookings (user_id, booking_date, checkin_date, checkout_date, booking_amount) VALUES (?, ?, ?, ?, ?)");
-    $stmt->bind_param("isssd", $userId, $bookingDate, $checkinDate, $checkoutDate, $bookingAmount);
+    // Insert booking record with booking_status
+    $stmt = $con->prepare("INSERT INTO bookings (user_id, booking_date, checkin_date, checkout_date, booking_amount, booking_status) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->bind_param("isssds", $userId, $bookingDate, $checkinDate, $checkoutDate, $bookingAmount, $bookingStatus);
 
     if (!$stmt->execute()) {
         throw new Exception('Failed to create booking');
@@ -130,14 +131,22 @@ try {
         throw new Exception('Failed to record payment details');
     }
 
+    // Update booking status to Completed
+    $updateStmt = $con->prepare("UPDATE bookings SET booking_status = 'Completed' WHERE booking_id = ?");
+    $updateStmt->bind_param("i", $bookingId);
+    if (!$updateStmt->execute()) {
+        throw new Exception('Failed to update booking status');
+    }
+
     // Commit transaction
     $con->commit();
 
-    // Return success response with payment URL
+    // Return success response with payment URL and booking status
     echo json_encode([
         'success' => true,
         'message' => 'Booking successful, redirecting to payment...',
         'booking_id' => $bookingId,
+        'booking_status' => 'Completed',
         'payment_url' => $paymentResult['payment_url']
     ]);
 } catch (Exception $e) {
@@ -162,6 +171,9 @@ try {
     }
     if (isset($paymentStmt) && $paymentStmt instanceof mysqli_stmt && !$paymentStmt->errno) {
         $paymentStmt->close();
+    }
+    if (isset($updateStmt) && $updateStmt instanceof mysqli_stmt && !$updateStmt->errno) {
+        $updateStmt->close();
     }
     $con->close();
 }

@@ -2,8 +2,8 @@
 include './helpers/connection.php';
 include './helpers/authHelper.php';
 
-if (!isset($_POST['token'])) {
-    echo json_encode(['success' => false, 'message' => 'Token is required']);
+if (!isset($_POST['token']) || !isset($_POST['booking_id'])) {
+    echo json_encode(['success' => false, 'message' => 'Token and Booking ID are required']);
     exit();
 }
 
@@ -15,109 +15,100 @@ if (!$userId) {
     exit();
 }
 
-// Validate required fields
-if (!isset($_POST['booking_id'], $_POST['rooms_to_cancel'], $_POST['price_per_room'])) {
-    echo json_encode(['success' => false, 'message' => 'All fields are required']);
-    exit();
-}
-
 $bookingId = intval($_POST['booking_id']);
-$roomsToCancel = intval($_POST['rooms_to_cancel']);
-$pricePerRoom = floatval($_POST['price_per_room']);
-
 $con->begin_transaction();
 
 try {
-    // Fetch current booking details
+    // Verify booking and fetch checkin_date, checkout_date
     $stmt = $con->prepare("
-        SELECT COUNT(br.room_id) AS current_rooms 
+        SELECT checkin_date, checkout_date 
         FROM bookings 
-        JOIN booking_rooms br ON bookings.booking_id = br.booking_id 
-        WHERE bookings.booking_id = ? AND bookings.user_id = ?
+        WHERE booking_id = ? AND user_id = ?
     ");
     $stmt->bind_param("ii", $bookingId, $userId);
     $stmt->execute();
     $result = $stmt->get_result();
 
     if ($result->num_rows === 0) {
-        throw new Exception('Booking not found');
+        throw new Exception('Booking not found or unauthorized');
     }
 
-    $bookingData = $result->fetch_assoc();
-    $currentRooms = intval($bookingData['current_rooms']);
-
-    if ($roomsToCancel >= $currentRooms) {
-        throw new Exception('Cannot cancel all rooms. Use delete booking feature.');
+    $booking = $result->fetch_assoc();
+    if (!$booking['checkin_date'] || !strtotime($booking['checkin_date'])) {
+        throw new Exception('Invalid checkin date');
     }
 
-    // Fetch booked rooms for removal
+    $checkinDate = strtotime($booking['checkin_date']);
+    $checkoutDate = strtotime($booking['checkout_date']);
+    $today = strtotime(date('Y-m-d'));
+
+    // Prevent cancellation after checkout date
+    if ($checkoutDate < $today) {
+        throw new Exception('Cannot cancel booking after checkout date');
+    }
+
+    // Fetch all room IDs for the booking
     $roomFetch = $con->prepare("
-        SELECT room_id FROM booking_rooms 
-        WHERE booking_id = ? 
-        LIMIT ?
+        SELECT room_id 
+        FROM booking_rooms 
+        WHERE booking_id = ?
     ");
-    $roomFetch->bind_param("ii", $bookingId, $roomsToCancel);
+    $roomFetch->bind_param("i", $bookingId);
     $roomFetch->execute();
     $roomResult = $roomFetch->get_result();
 
-    if ($roomResult->num_rows < $roomsToCancel) {
-        throw new Exception('Error fetching rooms for cancellation');
-    }
-
-    // Prepare statements for room deletion and enabling
-    $deleteRoom = $con->prepare("
-        DELETE FROM booking_rooms 
-        WHERE booking_id = ? AND room_id = ? 
-        LIMIT 1
-    ");
+    // Enable all rooms
     $enableRoom = $con->prepare("
-        UPDATE room 
+        UPDATE rooms 
         SET is_enabled = 1 
         WHERE room_id = ?
     ");
-
     while ($room = $roomResult->fetch_assoc()) {
-        // Delete room from booking
-        $deleteRoom->bind_param("ii", $bookingId, $room['room_id']);
-        if (!$deleteRoom->execute()) {
-            throw new Exception('Failed to cancel room');
-        }
-
-        // Enable the room
         $enableRoom->bind_param("i", $room['room_id']);
         if (!$enableRoom->execute()) {
-            throw new Exception('Failed to enable room');
+            throw new Exception('Failed to enable rooms: ' . $con->error);
         }
     }
+    error_log("Rooms enabled successfully");
 
-    // Update booking amount
-    $newBookingAmount = ($currentRooms - $roomsToCancel) * $pricePerRoom;
-    $updateBooking = $con->prepare("
-        UPDATE bookings 
-        SET booking_amount = ? 
+    // Delete booking_rooms entries
+    $deleteRooms = $con->prepare("
+        DELETE FROM booking_rooms 
         WHERE booking_id = ?
     ");
-    $updateBooking->bind_param("di", $newBookingAmount, $bookingId);
-    if (!$updateBooking->execute()) {
-        throw new Exception('Failed to update booking amount');
+    $deleteRooms->bind_param("i", $bookingId);
+    if (!$deleteRooms->execute()) {
+        throw new Exception('Failed to delete booking rooms: ' . $con->error);
     }
+    error_log("Booking rooms deleted successfully");
 
-    // Commit transaction
+    // Update booking status to Cancelled
+    $updateBooking = $con->prepare("
+        UPDATE bookings 
+        SET booking_status = 'Cancelled'
+        WHERE booking_id = ?
+    ");
+    $updateBooking->bind_param("i", $bookingId);
+    if (!$updateBooking->execute()) {
+        throw new Exception('Failed to update booking status: ' . $con->error);
+    }
+    error_log("Booking status updated to Cancelled successfully");
+
     $con->commit();
-
     echo json_encode([
         'success' => true,
-        'message' => 'Rooms canceled successfully',
-        'new_booking_amount' => $newBookingAmount
+        'message' => 'Booking canceled successfully',
+        'booking_status' => 'Cancelled'
     ]);
 } catch (Exception $e) {
+    error_log("Transaction failed: " . $e->getMessage());
     $con->rollback();
     echo json_encode(['success' => false, 'message' => $e->getMessage()]);
 } finally {
     if (isset($stmt)) $stmt->close();
     if (isset($roomFetch)) $roomFetch->close();
-    if (isset($deleteRoom)) $deleteRoom->close();
     if (isset($enableRoom)) $enableRoom->close();
+    if (isset($deleteRooms)) $deleteRooms->close();
     if (isset($updateBooking)) $updateBooking->close();
 }
 ?>

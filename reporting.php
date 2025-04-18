@@ -16,25 +16,42 @@ try {
     }
 
     $reportType = $_POST['report_type'] ?? '';
-    $timeRange = $_POST['time_range'] ?? 'daily';
+    $startDate = $_POST['start_date'] ?? null;
+    $endDate = $_POST['end_date'] ?? null;
+
+    // Validate start_date and end_date for bookings and earnings
+    if (in_array($reportType, ['bookings', 'earnings']) && ($startDate === null || $endDate === null)) {
+        throw new Exception('Start date and end date are required for this report type', 400);
+    }
+
+    // Validate date format and range
+    if ($startDate && $endDate) {
+        if (!DateTime::createFromFormat('Y-m-d', $startDate) || !DateTime::createFromFormat('Y-m-d', $endDate)) {
+            throw new Exception('Invalid date format. Use YYYY-MM-DD', 400);
+        }
+        if (strtotime($startDate) > strtotime($endDate)) {
+            throw new Exception('Start date cannot be after end date', 400);
+        }
+    }
 
     $response = [
         'success' => true,
         'data' => [],
         'metadata' => [
             'report_type' => $reportType,
-            'time_range' => $timeRange,
-            'record_count' => 0
+            'record_count' => 0,
+            'start_date' => $startDate,
+            'end_date' => $endDate
         ]
     ];
 
     switch ($reportType) {
         case 'bookings':
-            $response['data'] = getBookingReport($con, $timeRange);
+            $response['data'] = getBookingReport($con, $startDate, $endDate);
             break;
             
         case 'earnings':
-            $response['data'] = getEarningsReport($con, $timeRange);
+            $response['data'] = getEarningsReport($con, $startDate, $endDate);
             break;
             
         case 'guests':
@@ -61,36 +78,24 @@ try {
     ]);
 }
 
-function getBookingReport($con, $timeRange) {
-    $query = $timeRange === 'daily' 
-        ? "SELECT DATE(booking_date) AS date, COUNT(*) AS count 
-           FROM bookings 
-           GROUP BY DATE(booking_date)
-           ORDER BY date DESC
-           LIMIT 30"
-        : "SELECT DATE_FORMAT(booking_date, '%Y-%m') AS month, COUNT(*) AS count
-           FROM bookings 
-           GROUP BY DATE_FORMAT(booking_date, '%Y-%m')
-           ORDER BY month DESC
-           LIMIT 12";
+function getBookingReport($con, $startDate, $endDate) {
+    $query = "SELECT DATE(booking_date) AS date, COUNT(*) AS count 
+              FROM bookings 
+              WHERE booking_date BETWEEN ? AND ?
+              GROUP BY DATE(booking_date)
+              ORDER BY date ASC";
     
-    return executeQuery($con, $query);
+    return executePreparedQuery($con, $query, [$startDate, $endDate]);
 }
 
-function getEarningsReport($con, $timeRange) {
-    $query = $timeRange === 'daily'
-        ? "SELECT DATE(booking_date) AS date, SUM(booking_amount) AS amount 
-           FROM bookings 
-           GROUP BY DATE(booking_date)
-           ORDER BY date DESC
-           LIMIT 30"
-        : "SELECT DATE_FORMAT(booking_date, '%Y-%m') AS month, SUM(booking_amount) AS amount
-           FROM bookings 
-           GROUP BY DATE_FORMAT(booking_date, '%Y-%m')
-           ORDER BY month DESC
-           LIMIT 12";
+function getEarningsReport($con, $startDate, $endDate) {
+    $query = "SELECT DATE(booking_date) AS date, SUM(booking_amount) AS amount 
+              FROM bookings 
+              WHERE booking_date BETWEEN ? AND ?
+              GROUP BY DATE(booking_date)
+              ORDER BY date ASC";
     
-    return executeQuery($con, $query);
+    return executePreparedQuery($con, $query, [$startDate, $endDate]);
 }
 
 function getGuestReport($con) {
@@ -127,3 +132,20 @@ function executeQuery($con, $query) {
     }
     return mysqli_fetch_all($result, MYSQLI_ASSOC);
 }
+
+function executePreparedQuery($con, $query, $params) {
+    $stmt = mysqli_prepare($con, $query);
+    if (!$stmt) {
+        throw new Exception('Database error: ' . mysqli_error($con), 500);
+    }
+    mysqli_stmt_bind_param($stmt, str_repeat('s', count($params)), ...$params);
+    mysqli_stmt_execute($stmt);
+    $result = mysqli_stmt_get_result($stmt);
+    if (!$result) {
+        throw new Exception('Database error: ' . mysqli_error($con), 500);
+    }
+    $data = mysqli_fetch_all($result, MYSQLI_ASSOC);
+    mysqli_stmt_close($stmt);
+    return $data;
+}
+?>
