@@ -15,6 +15,7 @@ import BookingCancel from "./booking-cancel";
 import BookingUpdate from "./booking-update";
 import PaymentSuccess from "./payment-success";
 import UpdateProfile from "./updateProfile";
+import MyBookings from "./myBookings";
 
 
 function App() {
@@ -58,6 +59,10 @@ function App() {
       element: <ProfilePage />,
     },
     {
+      path: "/my-bookings",
+      element: <MyBookings/>,
+    },
+    {
       path: "/update-profile",
       element: <UpdateProfile/>,
     },
@@ -75,7 +80,6 @@ function App() {
       element: <PaymentSuccess />,
       
     },
-
 
     {
       path: "/booking-update/:booking_id", 

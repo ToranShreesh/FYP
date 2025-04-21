@@ -118,7 +118,7 @@ const RoomSearch = ({ onSearch, rooms }) => {
           </select>
         </div>
 
-        <div className="flex gap-2">
+        <div className="mt-7 flex gap-2">
           <button
             onClick={handleSearch}
             disabled={loading}

@@ -72,7 +72,7 @@ const ProfilePage = () => {
 
         {/* Booking History */}
         <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
-          <h3 className="text-2xl font-semibold text-gray-800">Booking List</h3>
+          <h3 className="text-2xl font-semibold text-gray-800">Booked Rooms</h3>
           {bookings.length > 0 ? (
             <div className="mt-4 overflow-x-auto"> {/* Horizontal scrolling container */}
               <table className="w-full border-collapse border border-gray-200">
