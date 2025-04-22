@@ -10,7 +10,7 @@ const AdminNavbar = ({ showMenu, onMenuClick }) => {
     }
 
     return (
-        <nav className="bg-gray-800 text-white p-4 shadow-md fixed w-full top-0 z-50 flex items-center justify-between px-6 py-2">
+        <nav className="bg-gray-800 text-white p-4 shadow-md fixed w-full top-0 z-50 flex items-center justify-between px-6 py-3">
             {/* Left Section */}
             <div className="flex items-center gap-4">
                 {showMenu && (
@@ -25,10 +25,7 @@ const AdminNavbar = ({ showMenu, onMenuClick }) => {
                 </Link>
             </div>
 
-            {/* Right Section - Logout Button */}
-            <div>
-                <LogoutButton />
-            </div>
+            
         </nav>
     );
 };

@@ -208,7 +208,7 @@ const AdminReports = () => {
   };
 
   const DateRangePicker = () => (
-    <div className="flex items-center gap-4">
+    <div className="flex mb-6 items-center gap-4">
       <div className="flex flex-col">
         <label className="text-sm font-medium text-gray-600 mb-1">START DATE</label>
         <DatePicker

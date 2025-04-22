@@ -13,6 +13,8 @@ import EditRoomClass from "../editRoomClass";
 import PaymentList from "../paymentList";
 import ManageFacilities from "../facility";
 import FacilityRatings from "../facilityRating";
+import Reviews from "../reviews";
+import Bookings from "../bookings";
 
 
 const AdminDashboard = () => {
@@ -26,8 +28,9 @@ const AdminDashboard = () => {
         <EditRoomClass/>,
         <EditRoom/>,
         <FacilityRatings/>,
+        <Reviews/>,
+        <Bookings/>,
         <AdminReports />,
-
         <PaymentList/>
     ];
 
