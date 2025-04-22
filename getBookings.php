@@ -21,11 +21,12 @@ if (!$userId) {
 $method = $_SERVER['REQUEST_METHOD'];
 
 if ($method === 'GET') {
-    // Fetch all bookings with details
+    // Fetch all bookings with details including room numbers
     $query = "
         SELECT b.booking_id, b.user_id, u.full_name, b.booking_date, b.checkin_date, b.checkout_date, 
                b.booking_amount, b.booking_status, COUNT(br.room_id) AS num_rooms, 
-               rc.class_name, rc.base_price
+               rc.class_name, rc.base_price,
+               GROUP_CONCAT(r.room_number) AS room_numbers
         FROM bookings b
         LEFT JOIN users u ON b.user_id = u.user_id
         LEFT JOIN booking_rooms br ON b.booking_id = br.booking_id
@@ -56,7 +57,8 @@ if ($method === 'GET') {
             'booking_status' => $row['booking_status'],
             'num_rooms' => $row['num_rooms'],
             'room_class' => $row['class_name'],
-            'base_price' => $row['base_price']
+            'base_price' => $row['base_price'],
+            'room_numbers' => $row['room_numbers'] ? explode(',', $row['room_numbers']) : []
         ];
     }
 
