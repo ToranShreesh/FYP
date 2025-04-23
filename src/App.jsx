@@ -6,7 +6,6 @@ import RegisterPage from "./register";
 import { Toaster } from "react-hot-toast";
 import "./global.css";
 import Rooms from "./Rooms";
-import ContactUs from "./contact-us";
 import Facilities from "./facilities";
 import RoomDetailPage from "./room-detail";
 import BookingPage from "./room-book";
@@ -16,6 +15,7 @@ import BookingUpdate from "./booking-update";
 import PaymentSuccess from "./payment-success";
 import UpdateProfile from "./updateProfile";
 import MyBookings from "./myBookings";
+
 
 
 function App() {
@@ -37,10 +37,6 @@ function App() {
     {
       path: "/facilities",
       element: <Facilities />,
-    },
-    {
-      path: "/contact-us",
-      element: <ContactUs />,
     },
     {
       path: "/login",

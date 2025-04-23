@@ -45,7 +45,7 @@ const LoginPage = () => {
     <div 
   className="flex items-center justify-center min-h-screen bg-gradient-to-br from-teal-50 to-teal-100 bg-cover bg-center bg-no-repeat"
   style={{ 
-    backgroundImage: "url('./assets/background.png')",
+    backgroundImage: "url('./assets/background.jpg')",
     backgroundBlendMode: "overlay"
   }}
 >
