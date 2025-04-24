@@ -27,7 +27,14 @@ $checkinDate = $_POST['checkin_date'];
 $checkoutDate = $_POST['checkout_date'];
 $bookingAmount = floatval($_POST['booking_amount']);
 $bookingDate = date('Y-m-d');
-$bookingStatus = 'Pending'; // Set initial booking status
+$bookingStatus = 'Pending';
+
+// Validate date range
+$today = date('Y-m-d');
+if ($checkinDate < $today || $checkoutDate <= $checkinDate) {
+    echo json_encode(['success' => false, 'message' => 'Invalid date range']);
+    exit();
+}
 
 // Khalti configuration
 $KHALTI_SECRET_KEY = 'b8e052b48a8942a6afbf955e765d585a';
@@ -39,7 +46,7 @@ $WEBSITE_URL = 'http://localhost:3000';
 $con->begin_transaction();
 
 try {
-    // Insert booking record with booking_status
+    // Insert booking record
     $stmt = $con->prepare("INSERT INTO bookings (user_id, booking_date, checkin_date, checkout_date, booking_amount, booking_status) VALUES (?, ?, ?, ?, ?, ?)");
     $stmt->bind_param("isssds", $userId, $bookingDate, $checkinDate, $checkoutDate, $bookingAmount, $bookingStatus);
 
@@ -49,31 +56,52 @@ try {
 
     $bookingId = $stmt->insert_id;
 
-    // Fetch available rooms that are enabled
-    $roomQuery = $con->prepare("SELECT room_id FROM rooms WHERE room_class_id = ? AND is_enabled = 1 LIMIT ?");
-    $roomQuery->bind_param("ii", $roomClassId, $numRooms);
+    // Check available rooms for the date range (only enabled rooms)
+    $roomQuery = $con->prepare("
+        SELECT r.room_id 
+        FROM rooms r
+        WHERE r.room_class_id = ? 
+        AND r.is_enabled = 1
+        AND r.room_id NOT IN (
+            SELECT br.room_id 
+            FROM booking_rooms br
+            JOIN bookings b ON br.booking_id = b.booking_id
+            WHERE b.booking_status != 'Cancelled'
+            AND (
+                (b.checkin_date <= ? AND b.checkout_date > ?)
+                OR (b.checkin_date < ? AND b.checkout_date >= ?)
+                OR (b.checkin_date >= ? AND b.checkout_date <= ?)
+            )
+        )
+        LIMIT ?
+    ");
+    $roomQuery->bind_param("issssssi", 
+        $roomClassId, 
+        $checkoutDate, 
+        $checkinDate, 
+        $checkoutDate, 
+        $checkinDate, 
+        $checkinDate, 
+        $checkoutDate, 
+        $numRooms
+    );
     $roomQuery->execute();
     $roomResult = $roomQuery->get_result();
 
     if ($roomResult->num_rows < $numRooms) {
-        throw new Exception('Not enough available rooms');
+        $errorMsg = $roomResult->num_rows === 0 
+            ? "No rooms available. All rooms may be booked or under maintenance."
+            : "Not enough available rooms. Only " . $roomResult->num_rows . " rooms available.";
+        throw new Exception($errorMsg);
     }
 
-    // Insert selected rooms into booking_rooms table and disable them
+    // Insert selected rooms into booking_rooms table
     $insertRoom = $con->prepare("INSERT INTO booking_rooms (booking_id, room_id) VALUES (?, ?)");
-    $disableRoom = $con->prepare("UPDATE rooms SET is_enabled = 0 WHERE room_id = ?");
-
     while ($room = $roomResult->fetch_assoc()) {
         $roomId = $room['room_id'];
-
         $insertRoom->bind_param("ii", $bookingId, $roomId);
         if (!$insertRoom->execute()) {
             throw new Exception('Failed to assign room to booking');
-        }
-
-        $disableRoom->bind_param("i", $roomId);
-        if (!$disableRoom->execute()) {
-            throw new Exception('Failed to disable booked room');
         }
     }
 
@@ -141,7 +169,6 @@ try {
     // Commit transaction
     $con->commit();
 
-    // Return success response with payment URL and booking status
     echo json_encode([
         'success' => true,
         'message' => 'Booking successful, redirecting to payment...',
@@ -156,7 +183,6 @@ try {
         'message' => $e->getMessage()
     ]);
 } finally {
-    // Only close statements if they are still open
     if (isset($stmt) && $stmt instanceof mysqli_stmt && !$stmt->errno) {
         $stmt->close();
     }
@@ -165,9 +191,6 @@ try {
     }
     if (isset($insertRoom) && $insertRoom instanceof mysqli_stmt && !$insertRoom->errno) {
         $insertRoom->close();
-    }
-    if (isset($disableRoom) && $disableRoom instanceof mysqli_stmt && !$disableRoom->errno) {
-        $disableRoom->close();
     }
     if (isset($paymentStmt) && $paymentStmt instanceof mysqli_stmt && !$paymentStmt->errno) {
         $paymentStmt->close();

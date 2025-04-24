@@ -78,29 +78,64 @@ if ($method === 'GET') {
         ]);
     }
 } elseif ($method === 'POST') {
-    // Delete booking
-    $data = json_decode(file_get_contents('php://input'), true);
-    $booking_id = isset($data['booking_id']) ? intval($data['booking_id']) : 0;
+    $action = isset($_POST['action']) ? $_POST['action'] : '';
 
-    if ($booking_id <= 0) {
-        http_response_code(400);
-        echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
-        exit();
-    }
+    if ($action === 'delete') {
+        // Delete booking
+        $booking_id = isset($_POST['booking_id']) ? intval($_POST['booking_id']) : 0;
 
-    $query = "DELETE FROM bookings WHERE booking_id = ?";
-    $stmt = mysqli_prepare($con, $query);
-    mysqli_stmt_bind_param($stmt, 'i', $booking_id);
-    $result = mysqli_stmt_execute($stmt);
+        if ($booking_id <= 0) {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'message' => 'Invalid booking ID']);
+            exit();
+        }
 
-    if ($result) {
-        echo json_encode(['success' => true, 'message' => 'Booking deleted successfully']);
+        // Delete related payments records
+        $query = "DELETE FROM payments WHERE booking_id = ?";
+        $stmt = mysqli_prepare($con, $query);
+        mysqli_stmt_bind_param($stmt, 'i', $booking_id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        if (!$result) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete payments: ' . mysqli_error($con)]);
+            mysqli_close($con);
+            exit();
+        }
+
+        // Delete related booking_rooms records
+        $query = "DELETE FROM booking_rooms WHERE booking_id = ?";
+        $stmt = mysqli_prepare($con, $query);
+        mysqli_stmt_bind_param($stmt, 'i', $booking_id);
+        $result = mysqli_stmt_execute($stmt);
+        mysqli_stmt_close($stmt);
+
+        if (!$result) {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete booking rooms: ' . mysqli_error($con)]);
+            mysqli_close($con);
+            exit();
+        }
+
+        // Delete booking
+        $query = "DELETE FROM bookings WHERE booking_id = ?";
+        $stmt = mysqli_prepare($con, $query);
+        mysqli_stmt_bind_param($stmt, 'i', $booking_id);
+        $result = mysqli_stmt_execute($stmt);
+
+        if ($result) {
+            echo json_encode(['success' => true, 'message' => 'Booking deleted successfully']);
+        } else {
+            http_response_code(500);
+            echo json_encode(['success' => false, 'message' => 'Failed to delete booking: ' . mysqli_error($con)]);
+        }
+
+        mysqli_stmt_close($stmt);
     } else {
-        http_response_code(500);
-        echo json_encode(['success' => false, 'message' => 'Failed to delete booking: ' . mysqli_error($con)]);
+        http_response_code(400);
+        echo json_encode(['success' => false, 'message' => 'Invalid or missing action']);
     }
-
-    mysqli_stmt_close($stmt);
 } else {
     http_response_code(405);
     echo json_encode(['success' => false, 'message' => 'Method not allowed']);
