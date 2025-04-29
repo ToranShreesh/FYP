@@ -6,7 +6,7 @@ const Footer = () => {
       <div className="max-w-7xl mx-auto px-6 grid grid-cols-1 md:grid-cols-3 gap-12">
         {/* About Section */}
         <div>
-          <h3 className="text-2xl font-semibold mb-4">Hotel Pokhara</h3>
+          <h3 className="text-2xl font-semibold mb-4">Hotel Ease</h3>
           <p className="leading-relaxed text-gray-400">
             Experience the ultimate comfort and luxury in the heart of nature.
             Our hotel offers premium services and breathtaking views.
@@ -43,10 +43,10 @@ const Footer = () => {
             </li>
             <li>
               <a
-                href="/about"
+                href="/about-us"
                 className="text-gray-400 hover:text-gray-100 transition duration-200"
               >
-                About
+                About Us
               </a>
             </li>
           </ul>
@@ -60,7 +60,7 @@ const Footer = () => {
               <span className="mr-2">📞</span> Phone: +977-9800000000
             </li>
             <li className="flex items-center">
-              <span className="mr-2">📧</span> Email: info@hotelpokhara.com
+              <span className="mr-2">📧</span> Email: info@hotelease.com
             </li>
             <li className="flex items-center">
               <span className="mr-2">📍</span> Address: Lakeside, Pokhara, Nepal
@@ -72,7 +72,7 @@ const Footer = () => {
       {/* Footer Bottom */}
       <div className="border-t border-gray-800 mt-8 pt-6 text-center">
         <p className="text-gray-500 text-sm">
-          &copy; 2024 Hotel Pokhara. All rights reserved.
+          &copy; 2024 Hotel Ease. All rights reserved.
         </p>
       </div>
     </footer>

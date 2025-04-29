@@ -7,6 +7,7 @@ import { baseUrl } from "../constants";
 const ProfilePage = () => {
   const [user, setUser] = useState(null);
   const [bookings, setBookings] = useState([]);
+  const [filteredBookings, setFilteredBookings] = useState([]); // New state for filtered bookings
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -30,6 +31,13 @@ const ProfilePage = () => {
         if (data.success) {
           setUser(data.user);
           setBookings(data.bookings);
+
+          // Filter bookings to show only those with checkout_date >= current date
+          const currentDate = new Date().toISOString().split("T")[0]; // YYYY-MM-DD
+          const activeBookings = data.bookings.filter((booking) => {
+            return booking.checkout_date >= currentDate;
+          });
+          setFilteredBookings(activeBookings);
         } else {
           setError(data.message);
         }
@@ -60,25 +68,29 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen flex flex-col bg-gray-50">
       <Navbar />
-      <div className="flex-grow container mx-auto p-6 max-w-6xl mt-20"> {/* Increased max-width */}
+      <div className="flex-grow container mx-auto p-6 max-w-6xl mt-20">
         <h1 className="text-4xl font-extrabold text-gray-800 text-center">My Profile</h1>
 
         {/* User Info */}
         <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
           <h3 className="text-2xl font-semibold text-gray-800">User Details</h3>
-          <p className="text-gray-700 mt-2"><strong>Name:</strong> {user.full_name}</p>
-          <p className="text-gray-700"><strong>Email:</strong> {user.email}</p>
+          <p className="text-gray-700 mt-2">
+            <strong>Name:</strong> {user.full_name}
+          </p>
+          <p className="text-gray-700">
+            <strong>Email:</strong> {user.email}
+          </p>
         </div>
 
         {/* Booking History */}
         <div className="mt-6 p-6 bg-white rounded-lg shadow-lg">
           <h3 className="text-2xl font-semibold text-gray-800">Booked Rooms</h3>
-          {bookings.length > 0 ? (
-            <div className="mt-4 overflow-x-auto"> {/* Horizontal scrolling container */}
+          {filteredBookings.length > 0 ? (
+            <div className="mt-4 overflow-x-auto">
               <table className="w-full border-collapse border border-gray-200">
                 <thead>
                   <tr className="bg-gray-100">
-                    <th className="border p-3">Room Number</th> {/* Updated header */}
+                    <th className="border p-3">Room Number</th>
                     <th className="border p-3">Room Class</th>
                     <th className="border p-3">Booking Date</th>
                     <th className="border p-3">Check-in</th>
@@ -88,14 +100,16 @@ const ProfilePage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {bookings.map((booking, index) => (
+                  {filteredBookings.map((booking, index) => (
                     <tr key={index} className="text-center">
-                      <td className="border p-3">{booking.room_number}</td> {/* Display room number */}
+                      <td className="border p-3">{booking.room_number}</td>
                       <td className="border p-3">{booking.class_name}</td>
                       <td className="border p-3">{booking.booking_date}</td>
                       <td className="border p-3">{booking.checkin_date}</td>
                       <td className="border p-3">{booking.checkout_date}</td>
-                      <td className="border p-3 font-semibold text-green-600">Rs {booking.booking_amount}</td>
+                      <td className="border p-3 font-semibold text-green-600">
+                        Rs {booking.booking_amount}
+                      </td>
                       <td className="border p-3">
                         <button
                           onClick={() => navigate(`/booking-update/${booking.booking_id}`)}
@@ -116,7 +130,7 @@ const ProfilePage = () => {
               </table>
             </div>
           ) : (
-            <p className="text-gray-500 mt-2">No bookings found.</p>
+            <p className="text-gray-500 mt-2">No active bookings found.</p>
           )}
         </div>
       </div>

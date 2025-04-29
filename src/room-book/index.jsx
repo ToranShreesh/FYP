@@ -4,7 +4,7 @@ import DatePicker from "react-datepicker";
 import { Carousel } from "react-responsive-carousel";
 import "react-datepicker/dist/react-datepicker.css";
 import "react-responsive-carousel/lib/styles/carousel.min.css";
-import { addDays, format, parseISO, isValid } from "date-fns";
+import { addDays, format, parseISO, isValid, isAfter } from "date-fns";
 import { baseUrl } from "../constants";
 import toast from "react-hot-toast";
 import { ArrowLeftIcon } from "@heroicons/react/24/outline";
@@ -30,8 +30,11 @@ const BookRoom = () => {
   useEffect(() => {
     const storedToken = localStorage.getItem("token");
     if (storedToken) setToken(storedToken);
-    else toast.error("Please log in first!");
-  }, []);
+    else {
+      toast.error("Please log in first!");
+      
+    }
+  }, [navigate]);
 
   // Fetch room details
   useEffect(() => {
@@ -67,7 +70,9 @@ const BookRoom = () => {
 
       const data = await response.json();
       if (data.success) {
-        const validDates = data.unavailableDates.map((date) => parseISO(date)).filter((date) => isValid(date));
+        const validDates = data.unavailableDates
+          .map((date) => parseISO(date))
+          .filter((date) => isValid(date));
         setUnavailableDates(validDates);
         setTotalRooms(data.totalRooms);
         setAvailableRoomsByDate(data.availableRoomsByDate || {});
@@ -99,7 +104,7 @@ const BookRoom = () => {
 
   // Update booking amount
   useEffect(() => {
-    if (roomDetails && checkinDate && checkoutDate) {
+    if (roomDetails && checkinDate && checkoutDate && isAfter(checkoutDate, checkinDate)) {
       const days = (checkoutDate - checkinDate) / (1000 * 60 * 60 * 24);
       setBookingAmount(days > 0 ? days * numRooms * roomDetails.base_price : 0);
     } else {
@@ -109,24 +114,24 @@ const BookRoom = () => {
 
   // Get available rooms for selected date range
   const getAvailableRoomsForRange = () => {
-    if (!checkinDate || !checkoutDate) return totalRooms;
+    if (!checkinDate || !checkoutDate || !isAfter(checkoutDate, checkinDate)) return totalRooms;
     let minAvailable = totalRooms;
     let currentDate = new Date(checkinDate);
-    while (currentDate < checkoutDate) {
+    while (currentDate <= checkoutDate) {
       const dateStr = format(currentDate, "yyyy-MM-dd");
-      const available = availableRoomsByDate[dateStr];
-      if (available !== undefined) minAvailable = Math.min(minAvailable, available);
+      const available = availableRoomsByDate[dateStr] !== undefined ? availableRoomsByDate[dateStr] : totalRooms;
+      minAvailable = Math.min(minAvailable, available);
       currentDate.setDate(currentDate.getDate() + 1);
     }
-    return minAvailable;
+    return minAvailable < 0 ? 0 : minAvailable;
   };
 
-  // Validate selected dates
+  // Validate selected date range
   const isDateRangeValid = () => {
-    if (!checkinDate || !checkoutDate) return true;
+    if (!checkinDate || !checkoutDate || !isAfter(checkoutDate, checkinDate)) return false;
     if (totalRooms === 0) return false;
     let currentDate = new Date(checkinDate);
-    while (currentDate < checkoutDate) {
+    while (currentDate <= checkoutDate) {
       const dateStr = format(currentDate, "yyyy-MM-dd");
       if (
         unavailableDates.some(
@@ -145,17 +150,19 @@ const BookRoom = () => {
   // Handle booking
   const handleBooking = async () => {
     if (!token || !room_class_id || numRooms < 1 || !checkinDate || !checkoutDate || bookingAmount <= 0) {
-      toast.error("All fields are required!");
+      toast.error("Please complete all fields correctly!");
       return;
     }
     const availableRooms = getAvailableRoomsForRange();
     if (numRooms > availableRooms) {
-      toast.error(`Only ${availableRooms} rooms available for selected dates!`);
+      toast.error(`Only ${availableRooms} rooms available for the selected dates!`);
       return;
     }
     if (!isDateRangeValid()) {
       toast.error(
-        totalRooms === 0 ? "No rooms available due to maintenance!" : "Selected date range includes unavailable dates!"
+        totalRooms === 0
+          ? "No rooms available due to maintenance!"
+          : "Selected date range includes unavailable dates!"
       );
       return;
     }
@@ -197,7 +204,7 @@ const BookRoom = () => {
       unavailableDates.some(
         (unavailableDate) => isValid(unavailableDate) && date.toDateString() === unavailableDate.toDateString()
       ) ||
-      availableRoomsByDate[dateStr] === 0;
+      (availableRoomsByDate[dateStr] !== undefined && availableRoomsByDate[dateStr] === 0);
     return isUnavailable ? "bg-red-100 font-semibold cursor-not-allowed" : "bg-green-50 hover:bg-green-100";
   };
 
@@ -219,17 +226,30 @@ const BookRoom = () => {
             <div className="flex-1 bg-white rounded-xl shadow-md p-6">
               <h2 className="text-3xl font-bold text-gray-800 mb-4">{roomDetails.class_name}</h2>
               {roomDetails.images?.length > 0 ? (
-                <Carousel showThumbs={false} autoPlay infiniteLoop className="mb-6">
-                  {roomDetails.images.map((image, index) => (
-                    <div key={index}>
-                      <img
-                        src={`${baseUrl}${image}`}
-                        alt={`Room ${index + 1}`}
-                        className="w-full h-80 object-cover rounded-lg"
-                      />
-                    </div>
-                  ))}
-                </Carousel>
+                <div className="mb-6">
+                  <Carousel
+                    showThumbs={false}
+                    autoPlay
+                    infiniteLoop
+                    showStatus={false} // Hides the "1 of X" status
+                    showIndicators={roomDetails.images.length > 1} // Show dots only if more than one image
+                    className="rounded-lg overflow-hidden"
+                  >
+                    {roomDetails.images.map((image, index) => (
+                      <div key={index}>
+                        <img
+                          src={`${baseUrl}${image}`}
+                          alt={`Room ${index + 1}`}
+                          className="w-full h-80 object-cover"
+                          onError={() => console.error(`Failed to load image: ${image}`)} // Log errors for debugging
+                        />
+                      </div>
+                    ))}
+                  </Carousel>
+                  <p className="text-sm text-gray-500 mt-2">
+                    {roomDetails.images.length} image{roomDetails.images.length !== 1 ? "s" : ""} available
+                  </p>
+                </div>
               ) : (
                 <p className="text-gray-500 text-center mb-6">No images available</p>
               )}

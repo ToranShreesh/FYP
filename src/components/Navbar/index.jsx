@@ -42,7 +42,7 @@ const Navbar = () => {
             <div className="flex items-center gap-2">
                 <NavLink to="/home" className="no-underline">
                     <span className="font-bold text-xl text-gray-800 font-sans tracking-wide">
-                         HOTEL POKHARA
+                         Hotel Ease
                     </span>
                 </NavLink>
             </div>

@@ -115,6 +115,8 @@ const RoomSearch = ({ onSearch, rooms }) => {
             <option value="">All</option>
             <option value="Standard Room">Standard Room</option>
             <option value="Deluxe Room">Deluxe Room</option>
+            <option value="Junior Suite Room">Junior Suite Room</option>
+            <option value="Deluxe Suite Room">Deluxe Suite Room</option>
           </select>
         </div>
 

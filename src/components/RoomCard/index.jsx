@@ -13,15 +13,35 @@ const RoomCard = ({
   const firstImage = images && images.length > 0 ? `${baseUrl}${images[0]}` : "/default-room.jpg";
 
   const parseData = (data) => {
+    if (!data || data === "") return [];
     try {
-      return JSON.parse(data.replace(/\\"/g, '"').replace(/\\\\/g, "\\"));
-    } catch {
+      if (typeof data === "string") {
+        let cleanedData = data.replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+        if (cleanedData.startsWith("[") && cleanedData.endsWith("]")) {
+          cleanedData = cleanedData
+            .replace(/\[(.+)\]/, (_, items) =>
+              `[${items.split(",").map((item) => `"${item.trim()}"`).join(",")}]`
+            );
+        }
+        const parsed = JSON.parse(cleanedData);
+        return Array.isArray(parsed) ? parsed : [];
+      }
       return [];
+    } catch {
+      return typeof data === "string"
+        ? data.split(/[,;]/).map((item) => item.trim()).filter(Boolean)
+        : [];
     }
   };
 
-  const parsedAmenities = Array.isArray(amenities) ? amenities : parseData(amenities);
+  const parsedAmenities = (amenities && (Array.isArray(amenities) ? amenities : parseData(amenities)) || [])
+    .map(item => item.replace(/\\"/g, '"')) // Fix escaped quotes (e.g., 43\" to 43")
+    .map(item => item.replace(/^"|"$/g, '')) // Remove quotes at start and end
+    .map(item => item.replace(/^\["/, '')); // Remove [" at start of any amenity
   const topAmenities = parsedAmenities.slice(0, 5);
+
+  // Debug log
+  console.log("Room:", class_name, "Amenities:", amenities, "Parsed:", parsedAmenities);
 
   return (
     <div className="max-w-6xl mx-auto mb-8">
@@ -57,14 +77,18 @@ const RoomCard = ({
             {/* Amenities */}
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-800 mb-3">Room Amenities</h3>
-              <div className="grid grid-cols-2 gap-3">
-                {topAmenities.slice(0, 4).map((amenity, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
-                    <span className="text-sm text-gray-600">{amenity}</span>
-                  </div>
-                ))}
-              </div>
+              {parsedAmenities.length > 0 ? (
+                <div className="grid grid-cols-2 gap-3">
+                  {topAmenities.slice(0, 4).map((amenity, index) => (
+                    <div key={index} className="flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 bg-amber-500 rounded-full"></span>
+                      <span className="text-sm text-gray-600">{amenity}</span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-sm text-gray-600">No amenities listed.</p>
+              )}
               {parsedAmenities.length > 4 && (
                 <button className="text-sm text-blue-600 font-medium mt-3 hover:text-blue-700 transition-colors duration-200">
                   + {parsedAmenities.length - 4} more

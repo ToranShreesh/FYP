@@ -16,12 +16,45 @@ const RoomDetailPage = () => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [showAllRules, setShowAllRules] = useState(false);
+  const [reviews, setReviews] = useState([]);
 
   const parseData = (data) => {
+    if (!data || data === "") return [];
+
+    // Handle newline-separated string format (e.g., "Bath Gowns\nDouble Bed\n...")
+    if (typeof data === "string" && !data.trim().startsWith("[")) {
+      return data
+        .split("\n")
+        .map(item => item.trim())
+        .filter(item => item)
+        .map(item => {
+          let cleanedItem = item.trim(); // Trim whitespace
+          while (cleanedItem.startsWith('"') || cleanedItem.endsWith('"')) {
+            cleanedItem = cleanedItem.replace(/^"|"$/g, '');
+            cleanedItem = cleanedItem.trim(); // Trim again after removing quotes
+          }
+          return cleanedItem;
+        });
+    }
+
+    // Handle JSON array string format (e.g., "[\"Bath Gowns\", \"Double Bed\", ...]")
     try {
-      return JSON.parse(data.replace(/\\"/g, '"').replace(/\\\\/g, "\\"));
-    } catch {
+      if (typeof data === "string") {
+        let cleanedData = data.replace(/\\"/g, '"').replace(/\\\\/g, "\\");
+        if (cleanedData.startsWith("[") && cleanedData.endsWith("]")) {
+          cleanedData = cleanedData
+            .replace(/\[(.+)\]/, (_, items) =>
+              `[${items.split(",").map((item) => `"${item.trim()}"`).join(",")}]`
+            );
+        }
+        const parsed = JSON.parse(cleanedData);
+        return Array.isArray(parsed) ? parsed : [];
+      }
       return [];
+    } catch {
+      return typeof data === "string"
+        ? data.split(/[,;]/).map((item) => item.trim()).filter(Boolean)
+        : [];
     }
   };
 
@@ -42,6 +75,13 @@ const RoomDetailPage = () => {
       });
   }, [room_class_id]);
 
+  // Debug log to inspect amenities
+  useEffect(() => {
+    if (room) {
+      console.log("Room:", room.class_name, "Amenities:", room.amenities, "Parsed:", parseData(room.amenities));
+    }
+  }, [room]);
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gray-50 flex justify-center items-center">
@@ -58,7 +98,16 @@ const RoomDetailPage = () => {
     );
   }
 
-  const parsedAmenities = Array.isArray(room.amenities) ? room.amenities : parseData(room.amenities);
+  const parsedAmenities = (Array.isArray(room.amenities) ? room.amenities : parseData(room.amenities))
+    .map(item => {
+      let cleanedItem = item.replace(/\\"/g, '"').trim(); // Trim whitespace and replace escaped quotes
+      while (cleanedItem.startsWith('"') || cleanedItem.endsWith('"')) {
+        cleanedItem = cleanedItem.replace(/^"|"$/g, '');
+        cleanedItem = cleanedItem.trim(); // Trim again after removing quotes
+      }
+      cleanedItem = cleanedItem.replace(/^\[|\]$/g, ''); // Remove stray brackets
+      return cleanedItem;
+    });
   const images = room.images || [];
   const nextImage = () => setCurrentImageIndex((prev) => (prev + 1) % images.length);
   const prevImage = () => setCurrentImageIndex((prev) => (prev - 1 + images.length) % images.length);
@@ -78,6 +127,12 @@ const RoomDetailPage = () => {
     "Guests must follow all hotel policies during their stay",
     "You can pay now or pay at the hotel if your selected room type has this option",
   ];
+
+  // Calculate average rating
+  const averageRating =
+    reviews.length > 0
+      ? (reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length).toFixed(1)
+      : null;
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -164,7 +219,7 @@ const RoomDetailPage = () => {
               <span className="font-semibold text-blue-700">Bed Type:</span> {room.bed_type}
             </div>
             <div>
-              <span className="font-semibold text-blue-700">Occupancy:</span> Up to {room.occupancy} people
+              <span className="font-semibold text-blue-700">Occupancy:</span> Up to {room.no_of_guests} people
             </div>
             <div>
               <span className="font-semibold text-blue-700">Smoking:</span> {room.smoking === 1 ? "Yes" : "No"}
@@ -197,8 +252,17 @@ const RoomDetailPage = () => {
 
         {/* Review Section */}
         <div className="bg-white p-6 rounded-xl shadow-md">
-          <h3 className="text-2xl font-semibold text-gray-800 mb-4">Guest Reviews</h3>
-          <ReviewCard room_class_id={room_class_id} />
+          <div className="flex items-center justify-between mb-6">
+            <h3 className="text-2xl font-semibold text-gray-800">Guest Reviews</h3>
+            {reviews.length > 0 && (
+              <div className="flex items-center gap-2">
+                <span className="text-yellow-400 text-xl">★</span>
+                <span className="font-semibold text-gray-800">{averageRating}</span>
+                <span className="text-gray-500">({reviews.length} {reviews.length === 1 ? 'review' : 'reviews'})</span>
+              </div>
+            )}
+          </div>
+          <ReviewCard room_class_id={room_class_id} setReviews={setReviews} />
         </div>
       </div>
 

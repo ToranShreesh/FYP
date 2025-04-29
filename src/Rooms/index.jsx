@@ -46,16 +46,7 @@ const RoomPage = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      {/* Back Button */}
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8 pt-20">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors duration-200"
-        >
-          <ArrowLeftIcon className="w-5 h-5 mr-2" />
-          Back
-        </button>
-      </div>
+      
 
       {/* Hero Section */}
       <div className="relative w-full h-[600px]">

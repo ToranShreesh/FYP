@@ -66,18 +66,10 @@ const Home = () => {
   ];
 
   useEffect(() => {
-    if (!token) {
-      toast.error("Please log in to access the site.");
-      navigate("/login");
-      return;
-    }
-
     const fetchRooms = async () => {
       try {
         const response = await fetch(`${baseUrl}getRoomAndClass.php`, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+          headers: token ? { Authorization: `Bearer ${token}` } : {}, // Only include Authorization if token exists
         });
         const data = await response.json();
 
@@ -99,15 +91,20 @@ const Home = () => {
       }
     };
 
-    fetchRooms();
-  }, [token, navigate]);
+    if (token) {
+      fetchRooms(); // Fetch rooms only if token exists
+    } else {
+      setRooms([]); // Set empty rooms for unauthenticated users
+      setLoading(false); // Stop loading
+    }
+  }, [token]);
 
   const handleDotClick = (index) => {
     setCurrentReview(index);
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 font-sans">
+    <div className="min-h-screen bg-gray-50 font-sans23">
       {/* Navbar */}
       <Navbar />
 
@@ -116,14 +113,14 @@ const Home = () => {
         <img
           className="w-full h-full object-cover"
           src="/assets/background.jpg"
-          alt="Hotel Pokhara Exterior"
+          alt="Hotel Ease Exterior"
           loading="lazy"
           onError={(e) => (e.target.src = "/default-hero.jpg")}
         />
         <div className="absolute inset-0 bg-black bg-opacity-60 flex items-center justify-center">
           <div className="text-center text-white px-4">
             <h1 className="text-5xl md:text-6xl font-serif font-bold mb-4 tracking-tight drop-shadow-md">
-              Welcome to Hotel Pokhara
+              Welcome to Hotel Ease
             </h1>
             <p className="text-xl md:text-2xl font-light mb-8 max-w-3xl mx-auto">
               Experience unparalleled luxury and tranquility in the heart of the Himalayas.
@@ -131,7 +128,7 @@ const Home = () => {
             <a
               href="#about"
               className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md"
-              aria-label="Discover Hotel Pokhara"
+              aria-label="Discover Hotel Ease"
             >
               Discover Now
             </a>
@@ -151,12 +148,12 @@ const Home = () => {
                 We bow to the divinity within you.
               </h3>
               <p className="text-gray-600 leading-relaxed mb-8">
-                Nestled by the serene lakeside of Pokhara, Hotel Pokhara blends luxury with tranquility. Our newly renovated rooms offer modern comforts for leisure or business travelers. Relax in our lush gardens, enjoy a refreshing dip in the infinity pool, or indulge in a rejuvenating spa session at our wellness center. With yoga, meditation, and personalized services, we craft unforgettable experiences.
+                Nestled by the serene lakeside of Pokhara, Hotel Ease blends luxury with tranquility. Our newly renovated rooms offer modern comforts for leisure or business travelers. Relax in our lush gardens, enjoy a refreshing dip in the infinity pool, or indulge in a rejuvenating spa session at our wellness center. With yoga, meditation, and personalized services, we craft unforgettable experiences.
               </p>
               <a
                 href="/about-us"
                 className="inline-block px-8 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md"
-                aria-label="Read more about Hotel Pokhara"
+                aria-label="Read more about Hotel Ease"
               >
                 Read More
               </a>
@@ -166,14 +163,14 @@ const Home = () => {
                 <img
                   className="w-full h-48 object-cover rounded-xl shadow-md"
                   src="/assets/lobby1.png"
-                  alt="Hotel Pokhara Lobby Seating Area"
+                  alt="Hotel Ease Lobby Seating Area"
                   loading="lazy"
                   onError={(e) => (e.target.src = "/default-image.jpg")}
                 />
                 <img
                   className="w-full h-48 object-cover rounded-xl shadow-md"
                   src="/assets/lobby2.png"
-                  alt="Hotel Pokhara Lobby Decor"
+                  alt="Hotel Ease Lobby Decor"
                   loading="lazy"
                   onError={(e) => (e.target.src = "/default-image.jpg")}
                 />
@@ -182,7 +179,7 @@ const Home = () => {
                 <img
                   className="w-full h-[400px] object-cover rounded-xl shadow-md"
                   src="/assets/reception.png"
-                  alt="Hotel Pokhara Reception"
+                  alt="Hotel Ease Reception"
                   loading="lazy"
                   onError={(e) => (e.target.src = "/default-image.jpg")}
                 />

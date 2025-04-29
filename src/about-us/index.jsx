@@ -12,16 +12,6 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <Navbar />
-      {/* Back Button */}
-      <div className="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-        <button
-          onClick={() => navigate(-1)}
-          className="flex items-center text-gray-600 hover:text-gray-800 mb-6 transition-colors duration-200"
-        >
-          <ArrowLeftIcon className="w-5 h-5 mr-2" />
-          Back
-        </button>
-      </div>
 
       {/* Hero Section */}
       <div
@@ -31,7 +21,7 @@ const AboutUs = () => {
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
         <div className="relative flex flex-col justify-center items-center h-full text-center text-white px-6">
           <h1 className="text-5xl md:text-7xl font-serif font-bold mb-6 tracking-tight drop-shadow-md">
-            Hotel Pokhara
+            Hotel Ease
           </h1>
           <p className="text-xl md:text-2xl max-w-3xl font-light leading-relaxed drop-shadow-md">
             A sanctuary of luxury and tranquility nestled in the heart of the Himalayas.
@@ -53,7 +43,7 @@ const AboutUs = () => {
           </h2>
           <div className="w-24 h-1 bg-amber-500 mx-auto mb-10"></div>
           <p className="text-lg md:text-xl text-gray-600 leading-relaxed text-center max-w-4xl mx-auto">
-            At Hotel Pokhara, we craft experiences that blend unparalleled hospitality, sustainable practices, and the authentic charm of Nepal, creating a haven where every guest feels cherished.
+            At Hotel Ease, we craft experiences that blend unparalleled hospitality, sustainable practices, and the authentic charm of Nepal, creating a haven where every guest feels cherished.
           </p>
         </div>
       </section>
@@ -71,7 +61,7 @@ const AboutUs = () => {
           <div className="lg:w-1/2">
             <h3 className="text-3xl font-serif font-bold text-gray-800 mb-4">Our Journey</h3>
             <p className="text-gray-600 leading-relaxed mb-4">
-              Founded in 2005, Hotel Pokhara was born from a vision to create a luxurious retreat that harmonizes with the breathtaking landscapes of Pokhara. Inspired by the serene beauty of the Himalayas and the vibrant culture of Nepal, our founders set out to redefine hospitality with a focus on elegance, sustainability, and community engagement.
+              Founded in 2005, Hotel Ease was born from a vision to create a luxurious retreat that harmonizes with the breathtaking landscapes of Pokhara. Inspired by the serene beauty of the Himalayas and the vibrant culture of Nepal, our founders set out to redefine hospitality with a focus on elegance, sustainability, and community engagement.
             </p>
             <p className="text-gray-600 leading-relaxed mb-6">
               Over the years, we have grown from a boutique hotel to a renowned destination, earning accolades for our innovative design, eco-friendly initiatives, and heartfelt service. Each milestone reflects our commitment to preserving the natural and cultural heritage of Pokhara while offering guests an unforgettable experience.
@@ -82,7 +72,7 @@ const AboutUs = () => {
                   Our journey began with a single building overlooking Phewa Lake, designed to blend seamlessly with its surroundings. We collaborated with local artisans to craft interiors that celebrate Nepalese craftsmanship, from handwoven textiles to intricate wood carvings. As we expanded, we introduced sustainable practices, such as solar energy, rainwater harvesting, and zero-waste dining, to minimize our environmental footprint.
                 </p>
                 <p className="text-gray-600 leading-relaxed">
-                  Today, Hotel Pokhara stands as a beacon of luxury and responsibility, supporting local communities through employment, education, and cultural preservation programs. Our story continues to evolve as we strive to create meaningful connections between our guests and the soul of Pokhara.
+                  Today, Hotel Ease stands as a beacon of luxury and responsibility, supporting local communities through employment, education, and cultural preservation programs. Our story continues to evolve as we strive to create meaningful connections between our guests and the soul of Pokhara.
                 </p>
               </div>
             )}
@@ -145,6 +135,7 @@ const AboutUs = () => {
             Guest Stories
           </h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+
             {[
               {
                 quote: "A breathtaking escape with impeccable service. The views and hospitality were unmatched.",
@@ -152,7 +143,7 @@ const AboutUs = () => {
                 image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
               },
               {
-                quote: "Every moment felt curated. Hotel Pokhara is a gem in the Himalayas.",
+                quote: "Every moment felt curated. Hotel Ease is a gem in the Himalayas.",
                 author: "Michael Chen",
                 image: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?ixlib=rb-4.0.3&auto=format&fit=crop&w=100&q=80",
               },
@@ -222,6 +213,30 @@ const AboutUs = () => {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Find Us Section */}
+      <section className="py-20 px-6 bg-gray-50">
+        <div className="container mx-auto max-w-6xl">
+          <h2 className="text-4xl md:text-5xl font-serif font-bold text-gray-800 text-center mb-12">
+            Find Us
+          </h2>
+          <div className="w-24 h-1 bg-amber-500 mx-auto mb-10"></div>
+          <p className="text-lg md:text-xl text-gray-600 leading-relaxed text-center max-w-4xl mx-auto mb-8">
+            Hotel Ease is located in the heart of Pokhara, near the serene Phewa Lake, offering easy access to the city’s natural and cultural attractions.
+          </p>
+          <div className="flex justify-center">
+            <iframe
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3516.2383220543187!2d83.9573203150711!3d28.209582982592885!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjPCsDEyJzM0LjUiTiA4M8KwNTcnMzQuNSJF!5e0!3m2!1sen!2sus!4v1634567890123!5m2!1sen!2sus"
+              width="100%"
+              height="450"
+              style={{ border: 0, maxWidth: "800px", borderRadius: "16px", boxShadow: "0 4px 15px rgba(0, 0, 0, 0.1)" }}
+              allowFullScreen=""
+              loading="lazy"
+              title="Hotel Ease Location"
+            ></iframe>
           </div>
         </div>
       </section>
