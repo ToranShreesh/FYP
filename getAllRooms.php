@@ -6,8 +6,8 @@ include './helpers/authHelper.php'; // Authentication helper
 header('Content-Type: application/json');
 
 try {     
-    // Fetch all rooms with their associated room class details
-    $sql = "SELECT r.room_id, r.room_class_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled 
+    // Fetch all rooms with their associated room class details, including remarks
+    $sql = "SELECT r.room_id, r.room_class_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled, r.remarks 
             FROM rooms r
             JOIN room_classes rc ON r.room_class_id = rc.room_class_id";
     $stmt = mysqli_prepare($con, $sql);
@@ -25,7 +25,8 @@ try {
             'class_name' => $row['class_name'],
             'floor_number' => (int)$row['floor_number'],
             'room_number' => $row['room_number'],
-            'is_enabled' => (int)$row['is_enabled'] // Cast to integer
+            'is_enabled' => (int)$row['is_enabled'], // Cast to integer
+            'remarks' => $row['remarks'] // Include remarks
         ];
     }
 

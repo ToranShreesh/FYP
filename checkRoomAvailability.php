@@ -54,43 +54,61 @@ try {
         exit();
     }
 
-    // Calculate available rooms per date
+    // Get all bookings for the room class within the date range
+    $bookingsQuery = $con->prepare("
+        SELECT b.checkin_date, b.checkout_date, COUNT(DISTINCT br.room_id) as booked_rooms
+        FROM bookings b
+        JOIN booking_rooms br ON b.booking_id = br.booking_id
+        JOIN rooms r ON br.room_id = r.room_id
+        WHERE r.room_class_id = ?
+        AND r.is_enabled = 1
+        AND b.booking_status != 'Cancelled'
+        AND b.checkin_date <= ?
+        AND b.checkout_date >= ?
+        GROUP BY b.checkin_date, b.checkout_date
+    ");
+    $bookingsQuery->bind_param("iss", $roomClassId, $endDate, $startDate);
+    $bookingsQuery->execute();
+    $bookingsResult = $bookingsQuery->get_result();
+
     $unavailableDates = [];
     $availableRoomsByDate = [];
     $currentDate = new DateTime($startDate);
     $endDateTime = new DateTime($endDate);
 
+    // Initialize available rooms for each date
     while ($currentDate <= $endDateTime) {
         $dateStr = $currentDate->format('Y-m-d');
-
-        $bookedQuery = $con->prepare("
-            SELECT COUNT(DISTINCT br.room_id) as booked_rooms
-            FROM bookings b
-            JOIN booking_rooms br ON b.booking_id = br.booking_id
-            JOIN rooms r ON br.room_id = r.room_id
-            WHERE r.room_class_id = ?
-            AND r.is_enabled = 1
-            AND b.booking_status != 'Cancelled'
-            AND b.checkin_date <= ?
-            AND b.checkout_date > ?
-        ");
-        $bookedQuery->bind_param("iss", $roomClassId, $dateStr, $dateStr);
-        $bookedQuery->execute();
-        $bookedResult = $bookedQuery->get_result();
-        $row = $bookedResult->fetch_assoc();
-        $bookedRooms = $row ? (int)$row['booked_rooms'] : 0;
-
-        error_log("Date: $dateStr, Room Class: $roomClassId, Booked: $bookedRooms, Total: $totalRooms");
-
-        $availableRooms = $totalRooms - $bookedRooms;
-        $availableRoomsByDate[$dateStr] = $availableRooms;
-
-        if ($availableRooms <= 0) {
-            $unavailableDates[] = $dateStr;
-        }
-
+        $availableRoomsByDate[$dateStr] = $totalRooms;
         $currentDate->modify('+1 day');
     }
+
+    // Process each booking to mark unavailable dates
+    while ($row = $bookingsResult->fetch_assoc()) {
+        $checkinDate = new DateTime($row['checkin_date']);
+        $checkoutDate = new DateTime($row['checkout_date']);
+        $bookedRooms = (int)$row['booked_rooms'];
+
+        // Adjust checkout date to exclude the last day (as checkout is typically in the morning)
+        $checkoutDate->modify('-1 day');
+
+        // Process each date in the booking range
+        $currentBookingDate = clone $checkinDate;
+        while ($currentBookingDate <= $checkoutDate) {
+            $dateStr = $currentBookingDate->format('Y-m-d');
+            if (isset($availableRoomsByDate[$dateStr])) {
+                $availableRoomsByDate[$dateStr] -= $bookedRooms;
+                if ($availableRoomsByDate[$dateStr] <= 0) {
+                    $unavailableDates[] = $dateStr;
+                }
+            }
+            $currentBookingDate->modify('+1 day');
+        }
+    }
+
+    // Remove duplicates and sort unavailable dates
+    $unavailableDates = array_unique($unavailableDates);
+    sort($unavailableDates);
 
     echo json_encode([
         'success' => true,
@@ -101,7 +119,7 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    error_log("check_room_availability error: " . $e->getMessage());
+    
     echo json_encode([
         'success' => false,
         'message' => 'Server error: ' . $e->getMessage()
@@ -113,8 +131,8 @@ try {
     if (isset($totalRoomsQuery) && $totalRoomsQuery instanceof mysqli_stmt && !$totalRoomsQuery->errno) {
         $totalRoomsQuery->close();
     }
-    if (isset($bookedQuery) && $bookedQuery instanceof mysqli_stmt && !$bookedQuery->errno) {
-        $bookedQuery->close();
+    if (isset($bookingsQuery) && $bookingsQuery instanceof mysqli_stmt && !$bookingsQuery->errno) {
+        $bookingsQuery->close();
     }
     $con->close();
 }

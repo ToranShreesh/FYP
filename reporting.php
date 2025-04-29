@@ -100,12 +100,12 @@ function getEarningsReport($con, $startDate, $endDate) {
 
 function getGuestReport($con) {
     $query = "SELECT u.full_name, u.email,
-              SUM(DATEDIFF(b.checkout_date, b.checkin_date)) AS totalStay
+              COUNT(b.booking_id) AS bookingCount
               FROM users u
               JOIN bookings b ON u.user_id = b.user_id
               WHERE u.role != 'admin'
               GROUP BY u.user_id
-              ORDER BY totalStay DESC
+              ORDER BY bookingCount DESC
               LIMIT 50";
     
     return executeQuery($con, $query);

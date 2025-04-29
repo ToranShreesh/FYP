@@ -143,7 +143,6 @@ try {
 
 } catch (Exception $e) {
     http_response_code(500);
-    error_log("searchRooms error: " . $e->getMessage());
     echo json_encode(['success' => false, 'message' => 'Server error: ' . $e->getMessage()]);
 }
 

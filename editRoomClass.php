@@ -91,13 +91,6 @@ foreach ($fields as $field => $type) {
     }
 }
 
-
-
- // Convert "drinks" and "smoking" to integers
- if ($field === 'drinks' || $field === 'smoking') {
-    $value = intval($value); // Convert "1" or "0" to actual integers
-}
-
 if (!empty($updateFields)) {
     $query = "UPDATE room_classes SET " . implode(", ", $updateFields) . " WHERE room_class_id = ?";
     $params[] = $roomClassId;
@@ -112,6 +105,7 @@ if (!empty($updateFields)) {
         echo json_encode(['success' => false, 'message' => 'Failed to update room class']);
     }
     $stmt->close();
+
 }
 
 // Handle image upload if any

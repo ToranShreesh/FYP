@@ -159,21 +159,14 @@ try {
         throw new Exception('Failed to record payment details');
     }
 
-    // Update booking status to Completed
-    $updateStmt = $con->prepare("UPDATE bookings SET booking_status = 'Completed' WHERE booking_id = ?");
-    $updateStmt->bind_param("i", $bookingId);
-    if (!$updateStmt->execute()) {
-        throw new Exception('Failed to update booking status');
-    }
-
     // Commit transaction
     $con->commit();
 
     echo json_encode([
         'success' => true,
-        'message' => 'Booking successful, redirecting to payment...',
+        'message' => 'Booking created, redirecting to payment...',
         'booking_id' => $bookingId,
-        'booking_status' => 'Completed',
+        'booking_status' => 'Pending',
         'payment_url' => $paymentResult['payment_url']
     ]);
 } catch (Exception $e) {
@@ -183,21 +176,37 @@ try {
         'message' => $e->getMessage()
     ]);
 } finally {
-    if (isset($stmt) && $stmt instanceof mysqli_stmt && !$stmt->errno) {
-        $stmt->close();
+    // Close statements safely
+    if (isset($stmt) && $stmt instanceof mysqli_stmt) {
+        try {
+            $stmt->close();
+        } catch (Exception $e) {
+            
+        }
     }
-    if (isset($roomQuery) && $roomQuery instanceof mysqli_stmt && !$roomQuery->errno) {
-        $roomQuery->close();
+    if (isset($roomQuery) && $roomQuery instanceof mysqli_stmt) {
+        try {
+            $roomQuery->close();
+        } catch (Exception $e) {
+            
+        }
     }
-    if (isset($insertRoom) && $insertRoom instanceof mysqli_stmt && !$insertRoom->errno) {
-        $insertRoom->close();
+    if (isset($insertRoom) && $insertRoom instanceof mysqli_stmt) {
+        try {
+            $insertRoom->close();
+        } catch (Exception $e) {
+           
+        }
     }
-    if (isset($paymentStmt) && $paymentStmt instanceof mysqli_stmt && !$paymentStmt->errno) {
-        $paymentStmt->close();
+    if (isset($paymentStmt) && $paymentStmt instanceof mysqli_stmt) {
+        try {
+            $paymentStmt->close();
+        } catch (Exception $e) {
+            
+        }
     }
-    if (isset($updateStmt) && $updateStmt instanceof mysqli_stmt && !$updateStmt->errno) {
-        $updateStmt->close();
+    if ($con instanceof mysqli && !$con->connect_error) {
+        $con->close();
     }
-    $con->close();
 }
 ?>

@@ -24,7 +24,7 @@ if (!$isAdmin) {
 
 // Fetch all rooms with their associated room class details
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    $sql = "SELECT r.room_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled 
+    $sql = "SELECT r.room_id, rc.class_name, r.floor_number, r.room_number, r.is_enabled, r.remarks 
             FROM rooms r
             JOIN room_classes rc ON r.room_class_id = rc.room_class_id";
 
@@ -62,11 +62,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit();
         }
 
-        $roomId = $_POST['room_id'];
+        $roomId = mysqli_real_escape_string($con, $_POST['room_id']); // Prevent SQL injection
         $updates = [];
 
         if (isset($_POST['class_name'])) {
-            $className = $_POST['class_name'];
+            $className = mysqli_real_escape_string($con, $_POST['class_name']);
             $getClassIdSql = "SELECT room_class_id FROM room_classes WHERE class_name = '$className'";
             $classResult = mysqli_query($con, $getClassIdSql);
 
@@ -83,12 +83,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             $updates[] = "room_class_id = '$roomClassId'";
         }
         if (isset($_POST['floor_number'])) {
-            $floorNumber = $_POST['floor_number'];
+            $floorNumber = mysqli_real_escape_string($con, $_POST['floor_number']);
             $updates[] = "floor_number = '$floorNumber'";
         }
         if (isset($_POST['room_number'])) {
-            $roomNumber = $_POST['room_number'];
+            $roomNumber = mysqli_real_escape_string($con, $_POST['room_number']);
             $updates[] = "room_number = '$roomNumber'";
+        }
+        if (isset($_POST['remarks'])) {
+            $remarks = mysqli_real_escape_string($con, $_POST['remarks']);
+            $updates[] = "remarks = '$remarks'";
         }
 
         if (!empty($updates)) {
@@ -103,7 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             } else {
                 echo json_encode([
                     'success' => false,
-                    'message' => 'Failed to update room',
+                    'message' => 'Failed to update room: ' . mysqli_error($con),
                 ]);
             }
         } else {
@@ -123,7 +127,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit();
         }
         
-        $roomId = $_POST['room_id'];
+        $roomId = mysqli_real_escape_string($con, $_POST['room_id']);
         $deleteSql = "DELETE FROM rooms WHERE room_id = '$roomId'";
         $deleteResult = mysqli_query($con, $deleteSql);
         
@@ -135,7 +139,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => 'Failed to delete room',
+                'message' => 'Failed to delete room: ' . mysqli_error($con),
             ]);
         }
     }
@@ -149,7 +153,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             exit();
         }
     
-        $roomId = $_POST['room_id'];
+        $roomId = mysqli_real_escape_string($con, $_POST['room_id']);
         $newStatus = ($action === 'disable') ? 0 : 1; // 0 for disable, 1 for enable
         $statusSql = "UPDATE rooms SET is_enabled = '$newStatus' WHERE room_id = '$roomId'";
         $statusResult = mysqli_query($con, $statusSql);
@@ -162,7 +166,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         } else {
             echo json_encode([
                 'success' => false,
-                'message' => "Failed to " . ($action === 'disable' ? "disable" : "enable") . " room",
+                'message' => "Failed to " . ($action === 'disable' ? "disable" : "enable") . " room: " . mysqli_error($con),
             ]);
         }
         exit();
