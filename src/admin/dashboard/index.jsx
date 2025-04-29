@@ -17,12 +17,13 @@ import Reviews from "../reviews";
 import Bookings from "../bookings";
 
 
+
 const AdminDashboard = () => {
     const [isExpanded, setIsExpanded] = useState(false)
     const pages = [
         <AdminHome />,
-        <AddRoom/>,
         <AddRoomClass/>,
+        <AddRoom/>,
         <AddFacility/>,
         <ManageFacilities/>,
         <EditRoomClass/>,

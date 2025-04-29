@@ -117,12 +117,12 @@ const AdminReports = () => {
                 stroke="#6b7280"
                 fontSize={14}
                 tickFormatter={(value) =>
-                  reportConfig.type === 'earnings' ? `$${value.toLocaleString()}` : value
+                  reportConfig.type === 'earnings' ? `Rs${value.toLocaleString()}` : value
                 }
               />
               <Tooltip
                 formatter={(value) =>
-                  reportConfig.type === 'earnings' ? `$${value.toLocaleString()}` : value
+                  reportConfig.type === 'earnings' ? `Rs${value.toLocaleString()}` : value
                 }
                 labelFormatter={(label) => formatDate(label)}
                 contentStyle={{ backgroundColor: '#fff', borderRadius: '8px', border: '1px solid #e5e7eb' }}
@@ -155,7 +155,7 @@ const AdminReports = () => {
             <tr className="bg-gray-100">
               <th className="border px-4 py-2 text-left">Guest Name</th>
               <th className="border px-4 py-2 text-left">Email</th>
-              <th className="border px-4 py-2 text-left">Total Stay</th>
+              <th className="border px-4 py-2 text-left">Booking Count</th>
             </tr>
           </thead>
           <tbody>
@@ -163,7 +163,7 @@ const AdminReports = () => {
               <tr key={index}>
                 <td className="border px-4 py-2">{guest.full_name}</td>
                 <td className="border px-4 py-2">{guest.email}</td>
-                <td className="border px-4 py-2">{guest.totalStay} nights</td>
+                <td className="border px-4 py-2">{guest.bookingCount}</td>
               </tr>
             ))}
           </tbody>

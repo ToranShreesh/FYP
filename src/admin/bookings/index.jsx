@@ -31,31 +31,75 @@ const Bookings = () => {
     fetchBookings();
   }, []);
 
-  const handleDelete = async (booking_id) => {
-    if (!window.confirm("Are you sure you want to delete this booking?")) return;
+  const handleDelete = (booking_id) => {
+    // Show toast with confirmation buttons
+    toast(
+      (t) => (
+        <div className="flex flex-col items-center gap-2">
+          <p>Are you sure you want to delete this booking?</p>
+          <div className="flex gap-2">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id); // Dismiss the toast
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  toast.error("Please log in to continue");
+                  return;
+                }
 
-    setDeleting((prev) => ({ ...prev, [booking_id]: true }));
-    try {
-      const response = await fetch(`${baseUrl}bookings.php`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${localStorage.getItem("token")}`,
+                if (!booking_id || isNaN(booking_id) || booking_id <= 0) {
+                  toast.error("Invalid booking ID");
+                  return;
+                }
+
+                setDeleting((prev) => ({ ...prev, [booking_id]: true }));
+                try {
+                  const formData = new FormData();
+                  formData.append("token", token);
+                  formData.append("action", "delete");
+                  formData.append("booking_id", booking_id);
+
+                  const response = await fetch(`${baseUrl}getBookings.php`, {
+                    method: "POST",
+                    body: formData,
+                  });
+
+                  const data = await response.json();
+
+                  if (data.success) {
+                    setBookings(bookings.filter((booking) => booking.booking_id !== booking_id));
+                    toast.success("Booking deleted successfully");
+                  } else {
+                    toast.error(data.message || "Failed to delete booking");
+                  }
+                } catch (err) {
+                  toast.error("Error connecting to server");
+                } finally {
+                  setDeleting((prev) => ({ ...prev, [booking_id]: false }));
+                }
+              }}
+              className="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600"
+            >
+              Yes, Delete
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="px-3 py-1 bg-gray-300 text-gray-800 rounded hover:bg-gray-400"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity, // Keep toast open until user interacts
+        style: {
+          background: "#fff",
+          color: "#000",
+          border: "1px solid #e5e7eb",
         },
-        body: JSON.stringify({ booking_id }),
-      });
-      const data = await response.json();
-      if (data.success) {
-        setBookings(bookings.filter((booking) => booking.booking_id !== booking_id));
-        toast.success("Booking deleted successfully");
-      } else {
-        toast.error(data.message || "Failed to delete booking");
       }
-    } catch (err) {
-      toast.error("Error connecting to server");
-    } finally {
-      setDeleting((prev) => ({ ...prev, [booking_id]: false }));
-    }
+    );
   };
 
   if (loading) {
@@ -112,14 +156,14 @@ const Bookings = () => {
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.booking_date}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.checkin_date}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.checkout_date}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 border-b">${booking.booking_amount}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 border-b">Rs{booking.booking_amount}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.booking_status}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.num_rooms}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">
-                    {booking.room_numbers?.length > 0 ? booking.room_numbers.join(', ') : 'N/A'}
+                    {booking.room_numbers?.length > 0 ? booking.room_numbers.join(", ") : "N/A"}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.room_class || 'N/A'}</td>
-                  <td className="px-4 py-3 text-sm text-gray-600 border-b">${booking.base_price || 'N/A'}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 border-b">{booking.room_class || "N/A"}</td>
+                  <td className="px-4 py-3 text-sm text-gray-600 border-b">Rs{booking.base_price || "N/A"}</td>
                   <td className="px-4 py-3 text-sm text-gray-600 border-b">
                     <button
                       onClick={() => handleDelete(booking.booking_id)}

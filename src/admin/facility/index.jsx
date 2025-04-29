@@ -30,7 +30,21 @@ const ManageFacilities = () => {
         method: "POST",
         body: formData,
       });
-      const data = await response.json();
+
+      const text = await response.text();
+      console.log("Fetch facilities raw response:", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error("JSON Parse Error:", error);
+        toast.error("Invalid server response");
+        setLoading(false);
+        return;
+      }
+
+      console.log("Fetch facilities parsed response:", data);
 
       if (data.success) {
         setFacilities(data.facilities);
@@ -38,6 +52,7 @@ const ManageFacilities = () => {
         toast.error(data.message || "Failed to fetch facilities");
       }
     } catch (error) {
+      console.error("Fetch error:", error);
       toast.error("Error fetching facilities");
     }
     setLoading(false);
@@ -74,6 +89,18 @@ const ManageFacilities = () => {
       return;
     }
 
+    if (!selectedFacility.facility_name.trim()) {
+      toast.error("Facility name is required");
+      setUpdating(false);
+      return;
+    }
+
+    if (!selectedFacility.newImage && !selectedFacility.facility_image_url) {
+      toast.error("Image URL or file is required");
+      setUpdating(false);
+      return;
+    }
+
     const formData = new FormData();
     formData.append("token", token);
     formData.append("action", "edit");
@@ -86,7 +113,10 @@ const ManageFacilities = () => {
       formData.append("facility_image_url", selectedFacility.facility_image_url);
     }
 
-    console.log("Edit payload:", Object.fromEntries(formData));
+    console.log("Edit FormData contents:");
+    for (let [key, value] of formData.entries()) {
+      console.log(`${key}:`, value instanceof File ? value.name : value);
+    }
 
     try {
       const response = await fetch(`${baseUrl}facility.php`, {
@@ -94,12 +124,31 @@ const ManageFacilities = () => {
         body: formData,
       });
 
-      const data = await response.json();
-      console.log("Edit response:", data);
+      if (!response.ok) {
+        console.error("HTTP Error:", response.status, response.statusText);
+        toast.error("Server error: " + response.statusText);
+        setUpdating(false);
+        return;
+      }
+
+      const text = await response.text();
+      console.log("Edit raw response:", text);
+
+      let data;
+      try {
+        data = JSON.parse(text);
+      } catch (error) {
+        console.error("JSON Parse Error:", error);
+        toast.error("Invalid server response");
+        setUpdating(false);
+        return;
+      }
+
+      console.log("Edit parsed response:", data);
 
       if (data.success) {
+        await fetchFacilities();
         toast.success("Facility updated successfully!");
-        fetchFacilities();
         setSelectedFacility(null);
       } else {
         toast.error(data.message || "Failed to update facility");
@@ -111,56 +160,98 @@ const ManageFacilities = () => {
     setUpdating(false);
   };
 
-  const handleDelete = async (facilityId) => {
-    if (!window.confirm("Are you sure you want to delete this facility?")) return;
+  const handleDelete = (facilityId, facilityName) => {
+    toast(
+      (t) => (
+        <div>
+          <p>Are you sure you want to delete <strong>{facilityName}</strong>?</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id);
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  toast.error("Please log in to continue");
+                  return;
+                }
 
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please log in to continue");
-      return;
-    }
+                const formData = new FormData();
+                formData.append("token", token);
+                formData.append("action", "delete");
+                formData.append("facility_id", facilityId);
 
-    const formData = new FormData();
-    formData.append("token", token);
-    formData.append("action", "delete");
-    formData.append("facility_id", facilityId);
+                console.log("Delete FormData contents:");
+                for (let [key, value] of formData.entries()) {
+                  console.log(`${key}:`, value);
+                }
 
-    console.log("Delete payload:", Object.fromEntries(formData));
+                try {
+                  const response = await fetch(`${baseUrl}facility.php`, {
+                    method: "POST",
+                    body: formData,
+                  });
 
-    try {
-      const response = await fetch(`${baseUrl}facility.php`, {
-        method: "POST",
-        body: formData,
-      });
+                  if (!response.ok) {
+                    console.error("HTTP Error:", response.status, response.statusText);
+                    toast.error("Server error: " + response.statusText);
+                    return;
+                  }
 
-      const data = await response.json();
-      console.log("Delete response:", data);
+                  const text = await response.text();
+                  console.log("Delete raw response:", text);
 
-      if (data.success) {
-        toast.success("Facility deleted successfully!");
-        fetchFacilities();
-      } else {
-        toast.error(data.message || "Failed to delete facility");
+                  let data;
+                  try {
+                    data = JSON.parse(text);
+                  } catch (error) {
+                    console.error("JSON Parse Error:", error);
+                    toast.error("Invalid server response");
+                    return;
+                  }
+
+                  console.log("Delete parsed response:", data);
+
+                  if (data.success) {
+                    toast.success("Facility deleted successfully!");
+                    await fetchFacilities();
+                  } else {
+                    toast.error(data.message || "Failed to delete facility");
+                  }
+                } catch (error) {
+                  console.error("Delete error:", error);
+                  toast.error("Something went wrong");
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity,
+        position: "top-center",
       }
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Something went wrong");
-    }
+    );
   };
 
   return (
     <div className="flex w-[1130px] min-h-screen bg-gray-50 justify-center">
       <div className="p-8 w-full max-w-5xl mx-auto">
-        {/* Header */}
         <h2 className="text-3xl font-semibold mb-6 text-gray-800 text-center tracking-tight">
           Admin - Manage Facilities
         </h2>
 
-        {/* Loading State */}
         {loading ? (
           <p className="text-center text-gray-500 text-lg">Loading facilities...</p>
         ) : (
-          /* Table */
           <div className="shadow-lg rounded-lg overflow-hidden">
             <table className="w-full border-collapse">
               <thead>
@@ -181,7 +272,7 @@ const ManageFacilities = () => {
                     <td className="p-4 text-gray-700">{facility.description}</td>
                     <td className="p-4 text-gray-700">
                       <img
-                        src={`${baseUrl}${facility.facility_image_url}`}
+                        src={`${baseUrl}${facility.facility_image_url.replace("./", "")}`}
                         alt={facility.facility_name}
                         className="w-28 h-28 object-cover rounded-lg shadow-sm"
                         onError={(e) => {
@@ -200,7 +291,7 @@ const ManageFacilities = () => {
                           : "Edit"}
                       </button>
                       <button
-                        onClick={() => handleDelete(facility.facility_id)}
+                        onClick={() => handleDelete(facility.facility_id, facility.facility_name)}
                         className="bg-red-500 hover:bg-red-600 text-white px-4 py-1.5 rounded-lg shadow-sm transition-all"
                       >
                         Delete
@@ -213,7 +304,6 @@ const ManageFacilities = () => {
           </div>
         )}
 
-        {/* Edit Form */}
         {selectedFacility && (
           <form
             onSubmit={handleUpdate}
@@ -223,7 +313,6 @@ const ManageFacilities = () => {
               Edit Facility: {selectedFacility.facility_name}
             </h3>
 
-            {/* Form Fields */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="flex flex-col">
                 <label className="text-sm font-medium text-gray-600 mb-1">
@@ -267,7 +356,7 @@ const ManageFacilities = () => {
                     <span className="text-gray-600">{selectedFacility.newImage.name}</span>
                   ) : (
                     <img
-                      src={`${baseUrl}${selectedFacility.facility_image_url}`}
+                      src={`${baseUrl}${selectedFacility.facility_image_url.replace("./", "")}`}
                       alt="Current Facility"
                       className="w-28 h-28 object-cover rounded-lg shadow-sm"
                       onError={(e) => {
@@ -293,7 +382,6 @@ const ManageFacilities = () => {
               </div>
             </div>
 
-            {/* Submit Button */}
             <button
               type="submit"
               disabled={updating}

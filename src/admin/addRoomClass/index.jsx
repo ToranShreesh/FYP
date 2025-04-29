@@ -148,7 +148,7 @@ const AddRoomClass = () => {
                 value={form.basePrice}
                 onChange={(e) => setForm({ ...form, basePrice: e.target.value })}
                 placeholder="e.g., 500"
-                min={0}
+                min={1}
                 className="w-full text-lg font-medium text-gray-800 bg-transparent border-b border-gray-200 focus:border-amber-400 outline-none placeholder-gray-400 transition-all duration-300"
                 required
               />

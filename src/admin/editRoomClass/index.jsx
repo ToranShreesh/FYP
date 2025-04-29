@@ -141,43 +141,68 @@ const EditRoomClass = () => {
       fetchRoomClasses();
       setSelectedRoom(null);
     } catch (error) {
-      toast.error("Something went wrong.");
+      
     }
   
     setUpdating(false);
   };
 
-  const handleDelete = async (roomClassName) => {
-    if (!window.confirm("Are you sure you want to delete this room class?")) return;
+  const handleDelete = (roomClassName) => {
+    // Show a toast with a confirmation prompt
+    toast(
+      (t) => (
+        <div>
+          <p>Are you sure you want to delete <strong>{roomClassName}</strong>?</p>
+          <div className="flex gap-2 mt-3">
+            <button
+              onClick={async () => {
+                toast.dismiss(t.id); // Dismiss the toast
+                const token = localStorage.getItem("token");
+                if (!token) {
+                  toast.error("Please log in to continue");
+                  return;
+                }
   
-    const token = localStorage.getItem("token");
-    if (!token) {
-      toast.error("Please log in to continue");
-      return;
-    }
+                try {
+                  const formData = new FormData();
+                  formData.append("room_class_name", roomClassName);
+                  formData.append("delete", "1");
+                  formData.append("token", token);
   
-    try {
-      const formData = new FormData();
-      formData.append("room_class_name", roomClassName);
-      formData.append("delete", "1");
-      formData.append("token", token);
+                  const response = await fetch(`${baseUrl}editRoomClass.php`, {
+                    method: "POST",
+                    body: formData,
+                  });
   
-      const response = await fetch(`${baseUrl}editRoomClass.php`, {
-        method: "POST",
-        body: formData,
-      });
-  
-      const data = await response.json();
-      if (data.success) {
-        toast.success("Room class deleted successfully!");
-        fetchRoomClasses();
-      } else {
-        toast.error(data.message || "Failed to delete room class.");
+                  const data = await response.json();
+                  if (data.success) {
+                    toast.success("Room class deleted successfully!");
+                    fetchRoomClasses();
+                  } else {
+                    toast.error(data.message || "Failed to delete room class.");
+                  }
+                } catch (error) {
+                  toast.error("Error deleting room class.");
+                }
+              }}
+              className="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded-lg"
+            >
+              Yes
+            </button>
+            <button
+              onClick={() => toast.dismiss(t.id)}
+              className="bg-gray-500 hover:bg-gray-600 text-white px-3 py-1 rounded-lg"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      ),
+      {
+        duration: Infinity, // Keep the toast until dismissed
+        position: "top-center",
       }
-    } catch (error) {
-      console.error("Delete error:", error);
-      toast.error("Something went wrong.");
-    }
+    );
   };
 
   const triggerFileInput = () => {
@@ -214,7 +239,7 @@ const EditRoomClass = () => {
                     >
                       {room.class_name}
                     </td>
-                    <td className="p-4 text-gray-700">${room.base_price}</td>
+                    <td className="p-4 text-gray-700">Rs{room.base_price}</td>
                     <td className="p-4 flex gap-3 justify-center">
                       <button
                         onClick={() => handleEditClick(room)}
@@ -246,34 +271,34 @@ const EditRoomClass = () => {
             </h3>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              {Object.keys(selectedRoom).map((key) => {
-                if (key === "id" || key === "images") return null;
-                return (
-                  <div key={key} className="flex flex-col">
-                    <label className="text-sm font-medium text-gray-600 mb-1">
-                      {key.replace("_", " ").toUpperCase()}
-                    </label>
-                    {key === "drinks" || key === "smoking" ? (
-                      <select
-                        value={selectedRoom[key]}
-                        onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
-                        className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                      >
-                        <option value="1">Yes</option>
-                        <option value="0">No</option>
-                      </select>
-                    ) : (
-                      <input
-                        type="text"
-                        placeholder={key}
-                        value={selectedRoom[key] || ""}
-                        onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
-                        className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
-                      />
-                    )}
-                  </div>
-                );
-              })}
+            {Object.keys(selectedRoom).map((key) => {
+              if (key === "id" || key === "images" || key === "room_class_id") return null;
+              return (
+                <div key={key} className="flex flex-col">
+                  <label className="text-sm font-medium text-gray-600 mb-1">
+                    {key.replace("_", " ").toUpperCase()}
+                  </label>
+                  {key === "drinks" || key === "smoking" ? (
+                    <select
+                      value={selectedRoom[key]}
+                      onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
+                      className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    >
+                      <option value="1">Yes</option>
+                      <option value="0">No</option>
+                    </select>
+                  ) : (
+                    <input
+                      type="text"
+                      placeholder={key}
+                      value={selectedRoom[key] || ""}
+                      onChange={(e) => setSelectedRoom({ ...selectedRoom, [key]: e.target.value })}
+                      className="p-2 border rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none"
+                    />
+                  )}
+                </div>
+              );
+            })}
             </div>
 
             <div className="space-y-4">

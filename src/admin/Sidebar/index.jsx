@@ -1,8 +1,4 @@
-import { IoMdHome } from "react-icons/io";
-import { FaTable } from "react-icons/fa6";
-import { FaBoxes } from "react-icons/fa";
-import { MdPayments } from "react-icons/md";
-import { FiLogOut } from "react-icons/fi"; // Added for logout
+import { FaHome, FaBed, FaTable, FaBoxes, FaPlusSquare, FaListAlt, FaKey, FaHotel, FaStar, FaComments, FaClipboardList, FaFileInvoiceDollar, FaSignOutAlt } from "react-icons/fa";
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
 import { baseUrl } from "../../constants";
@@ -11,19 +7,19 @@ const Sidebar = ({ active, setActive }) => {
   const navigate = useNavigate();
 
   const menuOptions = [
-    { title: "Dashboard", icon: <IoMdHome />, link: "/admin" },
-    { title: "Add Rooms", icon: <FaTable />, link: "/admin" },
-    { title: "AddRoomClass", icon: <FaBoxes />, link: "/admin" },
-    { title: "Add Facility", icon: <FaBoxes />, link: "/admin" },
-    { title: "Facility", icon: <FaBoxes />, link: "/admin" },
-    { title: "RoomClass", icon: <FaBoxes />, link: "/admin" },
-    { title: "Rooms", icon: <FaBoxes />, link: "/admin" },
-    { title: "Facility Ratings", icon: <FaBoxes />, link: "/admin" },
-    { title: "Reviews", icon: <FaBoxes />, link: "/admin" },
-    { title: "Bookings", icon: <FaBoxes />, link: "/admin" },
-    { title: "Reports", icon: <MdPayments />, link: "/admin" },
-    { title: "Payments", icon: <MdPayments />, link: "/admin" },
-    { title: "Logout", icon: <FiLogOut />, isLogout: true }, // Added logout
+    { title: "Dashboard", icon: <FaHome />, link: "/admin" },
+    { title: "Add Room Class", icon: <FaTable />, link: "/admin" },
+    { title: "Add Rooms", icon: <FaBed />, link: "/admin" },
+    { title: "Add Facility", icon: <FaPlusSquare />, link: "/admin" },
+    { title: "Facility", icon: <FaListAlt />, link: "/admin" },
+    { title: "Room Class", icon: <FaKey />, link: "/admin" },
+    { title: "Rooms", icon: <FaHotel />, link: "/admin" },
+    { title: "Facility Ratings", icon: <FaStar />, link: "/admin" },
+    { title: "Reviews", icon: <FaComments />, link: "/admin" },
+    { title: "Bookings", icon: <FaClipboardList />, link: "/admin" },
+    { title: "Reports", icon: <FaFileInvoiceDollar />, link: "/admin" },
+    { title: "Payments", icon: <FaFileInvoiceDollar />, link: "/admin" },
+    { title: "Logout", icon: <FaSignOutAlt />, isLogout: true },
   ];
 
   const onLogout = async () => {
