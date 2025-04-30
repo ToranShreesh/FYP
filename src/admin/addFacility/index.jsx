@@ -38,10 +38,10 @@ const AddFacility = () => {
       });
   
       const textResponse = await response.text(); // Get raw response
-      console.log("Raw API Response:", textResponse); // 🔍 Debugging log
+     
   
       const data = JSON.parse(textResponse); // Try parsing JSON
-      console.log("Parsed JSON:", data);
+    
   
       if (data.success) {
         toast.success("Facility added successfully!");
@@ -51,8 +51,7 @@ const AddFacility = () => {
         toast.error(data.message || "Failed to add facility.");
       }
     } catch (error) {
-      console.error("Error parsing JSON:", error);
-      toast.error("Something went wrong. Please check the console.");
+     
     }
   };
   

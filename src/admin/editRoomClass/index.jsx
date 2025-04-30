@@ -79,7 +79,7 @@ const EditRoomClass = () => {
   const handleUpdate = async (e) => {
     e.preventDefault();
     if (!selectedRoom || updating) return;
-    console.log("Submitting:", selectedRoom); 
+  
     setUpdating(true);
   
     try {

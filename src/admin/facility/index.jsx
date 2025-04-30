@@ -32,7 +32,7 @@ const ManageFacilities = () => {
       });
 
       const text = await response.text();
-      console.log("Fetch facilities raw response:", text);
+     
 
       let data;
       try {
@@ -44,7 +44,7 @@ const ManageFacilities = () => {
         return;
       }
 
-      console.log("Fetch facilities parsed response:", data);
+   
 
       if (data.success) {
         setFacilities(data.facilities);
@@ -113,9 +113,9 @@ const ManageFacilities = () => {
       formData.append("facility_image_url", selectedFacility.facility_image_url);
     }
 
-    console.log("Edit FormData contents:");
+    
     for (let [key, value] of formData.entries()) {
-      console.log(`${key}:`, value instanceof File ? value.name : value);
+     
     }
 
     try {
@@ -132,7 +132,7 @@ const ManageFacilities = () => {
       }
 
       const text = await response.text();
-      console.log("Edit raw response:", text);
+      
 
       let data;
       try {
@@ -144,7 +144,7 @@ const ManageFacilities = () => {
         return;
       }
 
-      console.log("Edit parsed response:", data);
+    
 
       if (data.success) {
         await fetchFacilities();
@@ -180,9 +180,9 @@ const ManageFacilities = () => {
                 formData.append("action", "delete");
                 formData.append("facility_id", facilityId);
 
-                console.log("Delete FormData contents:");
+                
                 for (let [key, value] of formData.entries()) {
-                  console.log(`${key}:`, value);
+                  
                 }
 
                 try {
@@ -198,7 +198,7 @@ const ManageFacilities = () => {
                   }
 
                   const text = await response.text();
-                  console.log("Delete raw response:", text);
+                  
 
                   let data;
                   try {
@@ -209,7 +209,7 @@ const ManageFacilities = () => {
                     return;
                   }
 
-                  console.log("Delete parsed response:", data);
+                  
 
                   if (data.success) {
                     toast.success("Facility deleted successfully!");

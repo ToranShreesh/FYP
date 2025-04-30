@@ -1,8 +1,6 @@
 import { useState } from "react";
-import Navbar from "../../components/Navbar";
 import Sidebar from "../Sidebar";
 import AdminHome from "../home";
-import { IoIosMenu } from "react-icons/io";
 import AdminNavbar from "../../components/adminNavbar";
 import AddRoomClass from "../addRoomClass";
 import AddRoom from "../addRoom";

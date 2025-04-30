@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import LogoutButton from "../LogoutButton";
 import { IoIosMenu } from "react-icons/io";
 
 const AdminNavbar = ({ showMenu, onMenuClick }) => {

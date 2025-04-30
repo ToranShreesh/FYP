@@ -29,7 +29,7 @@ const EditRoom = () => {
       });
 
       const text = await response.text();
-      console.log("Raw API Response (fetchRooms):", text);
+      
 
       if (!text.trim()) throw new Error("Empty response from server");
 
@@ -40,7 +40,7 @@ const EditRoom = () => {
         toast.error(data.message || "Failed to fetch rooms");
       }
     } catch (error) {
-      console.error("Fetch Rooms Error:", error);
+      
       toast.error(error.message || "Error fetching rooms");
     }
     setLoading(false);
@@ -83,7 +83,7 @@ const EditRoom = () => {
       });
 
       const text = await response.text();
-      console.log("Raw API Response (handleUpdate):", text);
+      
 
       if (!text.trim()) throw new Error("Empty response from server");
 
@@ -97,7 +97,7 @@ const EditRoom = () => {
         toast.error(data.message || "Failed to update room.");
       }
     } catch (error) {
-      console.error("Update Error:", error);
+      
       toast.error("Something went wrong.");
     }
     setUpdating(false);

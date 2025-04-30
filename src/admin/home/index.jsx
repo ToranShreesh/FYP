@@ -41,7 +41,7 @@ const AdminHome = () => {
       setBookings(result.bookings);
       // Log the raw booking_id to verify it's being fetched correctly
       result.bookings.forEach(booking => {
-        console.log(`Booking ID (Formatted): ${booking.id}, Raw Booking ID: ${booking.booking_id}`);
+        
       });
     } catch (err) {
       setError(err.message);

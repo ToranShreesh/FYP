@@ -82,7 +82,7 @@ const AdminReports = () => {
       toast.success('Report exported successfully!');
     } catch (err) {
       toast.error('Failed to export report');
-      console.error(err);
+     
     } finally {
       setLoading(false);
     }

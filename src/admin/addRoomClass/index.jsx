@@ -8,7 +8,7 @@ const AddRoomClass = () => {
     basePrice: "",
     description: "",
     amenities: [],
-    no_of_guests: "", // This will be a string in the form, but we'll parse it to an int on submission
+    no_of_guests: "", 
     roomSize: "",
     drinks: "No",
     smoking: "No",
@@ -88,7 +88,7 @@ const AddRoomClass = () => {
       });
 
       const data = await response.json();
-      console.log(data);
+     
 
       if (data.success) {
         toast.success("Room class added successfully!");
@@ -109,7 +109,7 @@ const AddRoomClass = () => {
       }
     } catch (error) {
       toast.error("Something went wrong. Please try again.");
-      console.error("Error:", error);
+      
     }
   };
 
